@@ -1,0 +1,68 @@
+﻿@model IEnumerable<MoneyTracker.Models.SubCategory>
+@{
+    ViewData["Title"] = "Index";
+}
+
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-3">
+            <h2 class="text-primary">Sub Category List</h2>
+        </div>
+        <div class="col-3">
+            <a asp-controller="Category" asp-action="index" class="btn btn-secondary">
+                <i class="bi bi-arrow-return-left"></i> &nbsp; Retrun
+            </a>
+        </div>
+        <div class="col-6 text-end">
+            <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> &nbsp; Create New Sub Category
+            </a>
+        </div>
+    </div>
+</div>
+
+<table class="table table-bordered table-striped" style="width:100%">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Name)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DisplayOrder)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Category)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model) {
+            <tr>
+                <td width="20%">
+                @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td width="40%">
+                @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td width="10%">
+                @Html.DisplayFor(modelItem => item.DisplayOrder)
+                </td>
+                <td width="10%">
+                @Html.DisplayFor(modelItem => item.Category.Name)
+                </td>
+                <td>
+                    <div class="btn-group w-80" role="group">
+                        <a asp-action="Edit" asp-route-id="@item.SubCategoryId" class="btn btn-primary mx-2"><i class="bi bi-pencil-square"></i> Edit</a>
+                    </div>
+                    <div class="btn-group w-80" role="group">
+                        <a asp-action="Delete" asp-route-id="@item.SubCategoryId" class="btn btn-danger mx-2"><i class="bi bi-trash-fill"></i> Delete</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
