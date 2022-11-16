@@ -54,7 +54,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "CATEGOR_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.SubCategory", b =>
@@ -94,7 +94,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "SUBCATEGORY_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("SubCategory");
+                    b.ToTable("SubCategory", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.SubCategory", b =>
