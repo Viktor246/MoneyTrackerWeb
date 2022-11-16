@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MoneyTracker.Data;
 using MoneyTracker.Models;
+using System.Security.Claims;
 
 namespace MoneyTracker.Controllers
 {
@@ -16,7 +18,7 @@ namespace MoneyTracker.Controllers
 
         public IActionResult Index()
         {
-            IEnumerable<Category> objectCategoryList = _db.Categories;
+            IEnumerable<Category> objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.getUserId());
             return View(objectCategoryList);
         }
         //GET
@@ -76,10 +78,12 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Category obj)
         {
+            obj.OwnerId = this.getUserId();
             if (obj.Name == obj.DisplayOrder.ToString())
             {
                 ModelState.AddModelError("NameDisOrderMatch", "The Dispaly Order can not exactly match the Name of category.");
             }
+            ModelState.Remove("SubCategories");
             if (ModelState.IsValid)
             {
                 _db.Categories.Add(obj);
@@ -134,6 +138,12 @@ namespace MoneyTracker.Controllers
             }
             TempData["success"] = "Category deleted successfully!";
             return RedirectToAction("Index");
+        }
+
+        public string getUserId()
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return userId;
         }
     }
 }

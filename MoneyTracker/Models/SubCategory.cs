@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
+using MoneyTracker.Areas.Identity.Data;
 
 namespace MoneyTracker.Models
 {
@@ -26,6 +27,8 @@ namespace MoneyTracker.Models
         public int CategoryId { get; set; }
 
         public Category Category { get; set; }
+
+        public string? OwnerId { get; set; }
 
         [DisplayName("Record Status")]
         public int RecordStatus { get; set; } = 1;

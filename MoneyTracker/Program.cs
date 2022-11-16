@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MoneyTracker.Data;
 using Microsoft.AspNetCore.Identity;
 using MoneyTracker.Areas.Identity.Data;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,8 +16,18 @@ builder.Services.AddDbContext<ApplicationUserContext>(options => options.UseSqlS
     ));
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationUserContext>();
+
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

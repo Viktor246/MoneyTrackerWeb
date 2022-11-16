@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using MoneyTracker.Areas.Identity.Data;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MoneyTracker.Models
 {
@@ -22,6 +24,8 @@ namespace MoneyTracker.Models
         public int DisplayOrder { get; set; }
 
         public ICollection<SubCategory> SubCategories { get; set; }
+
+        public string? OwnerId { get; set; }
 
         [DisplayName("Record Status")]
         public int RecordStatus { get; set; } = 1;

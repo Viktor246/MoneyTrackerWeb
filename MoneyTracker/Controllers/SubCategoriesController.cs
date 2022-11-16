@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -27,7 +28,7 @@ namespace MoneyTracker.Controllers
                 return NotFound();
             }
             ViewBag.CategoryId = categoryId;
-            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s=>s.CategoryId == categoryId);
+            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s=>s.CategoryId == categoryId && s.OwnerId == this.getUserId());
             return View(await applicationDBContext.ToListAsync());
         }
 
@@ -69,6 +70,7 @@ namespace MoneyTracker.Controllers
         public async Task<IActionResult> Create([Bind("SubCategoryId,Name,Description,DisplayOrder,CategoryId,RecordStatus,RecordStatusDate")] SubCategory subCategory)
         {
             subCategory.Category = _context.Categories.FirstOrDefault(p => p.Id == subCategory.CategoryId);
+            subCategory.OwnerId = this.getUserId();
             if (subCategory.Category == null)
             {
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
@@ -190,6 +192,11 @@ namespace MoneyTracker.Controllers
         private bool SubCategoryExists(int id)
         {
           return _context.SubCategory.Any(e => e.SubCategoryId == id);
+        }
+        public string getUserId()
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return userId;
         }
     }
 }

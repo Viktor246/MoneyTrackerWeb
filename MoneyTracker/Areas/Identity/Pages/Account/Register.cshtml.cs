@@ -22,6 +22,7 @@ using MoneyTracker.Areas.Identity.Data;
 
 namespace MoneyTracker.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
