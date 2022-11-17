@@ -3,6 +3,7 @@ using MoneyTracker.Data;
 using Microsoft.AspNetCore.Identity;
 using MoneyTracker.Areas.Identity.Data;
 using Microsoft.AspNetCore.Authorization;
+using MoneyTracker.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,15 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddEntityFrameworkStores<ApplicationUserContext>();
 
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("isOwner", policy =>
+        policy.Requirements.Add(new IsOwnerRequirement()));
+});
+
+builder.Services.AddSingleton<IAuthorizationHandler, CategoryAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, SubCategoryAuthorizationHandler>();
 
 builder.Services.AddAuthorization(options =>
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,13 @@ namespace MoneyTracker.Controllers
     public class SubCategoriesController : Controller
     {
         private readonly ApplicationDBContext _context;
+        private readonly IAuthorizationService _authorizationService;
 
-        public SubCategoriesController(ApplicationDBContext context)
+        public SubCategoriesController(ApplicationDBContext context, IAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
+
         }
 
         // GET: SubCategories/Index/5
@@ -27,11 +31,25 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
+
+            var category= await _context.Categories.FindAsync(categoryId);
+            var result = await _authorizationService.AuthorizeAsync(User, category, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
             ViewBag.CategoryId = categoryId;
             var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s=>s.CategoryId == categoryId && s.OwnerId == this.getUserId());
             return View(await applicationDBContext.ToListAsync());
         }
-
+        /*
         // GET: SubCategories/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -50,13 +68,26 @@ namespace MoneyTracker.Controllers
 
             return View(subCategory);
         }
-
+        */
         // GET: SubCategories/Create/5
-        public IActionResult Create(int? categoryId)
+        public async Task<IActionResult> Create(int? categoryId)
         {
             if (categoryId == null)
             {
                 return NotFound();
+            }
+            var category = await _context.Categories.FindAsync(categoryId);
+            var result = await _authorizationService.AuthorizeAsync(User, category, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
             }
             ViewBag.CategoryId = categoryId;
             return View();
@@ -69,8 +100,9 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("SubCategoryId,Name,Description,DisplayOrder,CategoryId,RecordStatus,RecordStatusDate")] SubCategory subCategory)
         {
-            subCategory.Category = _context.Categories.FirstOrDefault(p => p.Id == subCategory.CategoryId);
-            subCategory.OwnerId = this.getUserId();
+            var userId = this.getUserId();
+            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId || p.OwnerId == userId);
+            subCategory.OwnerId = userId;
             if (subCategory.Category == null)
             {
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
@@ -108,6 +140,18 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
+            var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
             ViewBag.CategoryId = subCategory.CategoryId;
             return View(subCategory);
         }
@@ -124,11 +168,23 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
-            subCategory.Category = _context.Categories.FirstOrDefault(p => p.Id == subCategory.CategoryId);
+            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId);
             if (subCategory.Category == null)
             {
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
 
+            }
+            var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
             }
             ModelState.Remove("Category");
             if (ModelState.IsValid)
@@ -164,6 +220,18 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
+            var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
 
             ViewBag.CategoryId = subCategory.CategoryId;
             return View(subCategory);
@@ -179,6 +247,20 @@ namespace MoneyTracker.Controllers
                 return Problem("Entity set 'ApplicationDBContext.SubCategory'  is null.");
             }
             var subCategory = await _context.SubCategory.FindAsync(id);
+
+            var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
+
             if (subCategory != null)
             {
                 _context.SubCategory.Remove(subCategory);
@@ -193,7 +275,7 @@ namespace MoneyTracker.Controllers
         {
           return _context.SubCategory.Any(e => e.SubCategoryId == id);
         }
-        public string getUserId()
+        private string getUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;

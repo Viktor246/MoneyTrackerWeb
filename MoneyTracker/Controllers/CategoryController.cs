@@ -10,10 +10,12 @@ namespace MoneyTracker.Controllers
     public class CategoryController : Controller
     {
         private readonly ApplicationDBContext _db;
+        private readonly IAuthorizationService _authorizationService;
 
-        public CategoryController(ApplicationDBContext db)
+        public CategoryController(ApplicationDBContext db, IAuthorizationService authorizationService)
         {
             _db = db;
+            _authorizationService = authorizationService;
         }
 
         public IActionResult Index()
@@ -22,27 +24,51 @@ namespace MoneyTracker.Controllers
             return View(objectCategoryList);
         }
         //GET
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
             if ( id == null || id == 0)
             {
                 return NotFound();
             }
 
-            var categoryFromDb = _db.Categories.Find(id);
+            var categoryFromDb = await _db.Categories.FindAsync(id);
 
-            if (categoryFromDb == null)
+            if (categoryFromDb == null || categoryFromDb.OwnerId == null)
             {
                 return NotFound();
             }
 
+            var result = await _authorizationService.AuthorizeAsync(User, categoryFromDb, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
             return View(categoryFromDb);
         }
         //POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Category obj)
+        public async Task<IActionResult> Edit(Category obj)
         {
+            var result = await _authorizationService.AuthorizeAsync(User, obj, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
             if (obj.Name == obj.DisplayOrder.ToString())
             {
                 ModelState.AddModelError("NameDisOrderMatch", "The Dispaly Order can not exactly match the Name of category.");
@@ -56,7 +82,7 @@ namespace MoneyTracker.Controllers
 
                 try
                 {
-                    _db.SaveChanges();
+                    await _db.SaveChangesAsync();
                 }
                 catch (Exception e)
                 {
@@ -100,36 +126,62 @@ namespace MoneyTracker.Controllers
             return View(obj);
         }
         //GET
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null || id == 0)
             {
                 return NotFound();
             }
 
-            var categoryFromDb = _db.Categories.Find(id);
+            var categoryFromDb = await _db.Categories.FindAsync(id);
 
             if (categoryFromDb == null)
             {
                 return NotFound();
             }
 
+            var result = await _authorizationService.AuthorizeAsync(User, categoryFromDb, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
             return View(categoryFromDb);
         }
         //POST
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeletePOST(int? id)
+        public async Task<IActionResult> DeletePOST(int? id)
         {
-            var obj = _db.Categories.Find(id);
+            var obj = await _db.Categories.FindAsync(id);
             if (obj == null)
             {
                 return NotFound();
             }
+
+            var result = await _authorizationService.AuthorizeAsync(User, obj, "isOwner");
+            if (!result.Succeeded)
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    return new ForbidResult();
+                }
+                else
+                {
+                    return new ChallengeResult();
+                }
+            }
+
             _db.Categories.Remove(obj);
             try
             {
-                _db.SaveChanges();
+                await _db.SaveChangesAsync();
             }
             catch (Exception e)
             {
@@ -140,7 +192,7 @@ namespace MoneyTracker.Controllers
             return RedirectToAction("Index");
         }
 
-        public string getUserId()
+        private string getUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;
