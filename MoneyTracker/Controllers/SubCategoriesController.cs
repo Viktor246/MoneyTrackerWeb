@@ -109,6 +109,7 @@ namespace MoneyTracker.Controllers
 
             }
             ModelState.Remove("Category");
+            ModelState.Remove("Expenses");
             if (ModelState.IsValid)
             {
                 _context.Add(subCategory);
