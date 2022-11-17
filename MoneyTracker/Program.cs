@@ -30,6 +30,7 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<IAuthorizationHandler, CategoryAuthorizationHandler>();
 builder.Services.AddSingleton<IAuthorizationHandler, SubCategoryAuthorizationHandler>();
+builder.Services.AddSingleton<IAuthorizationHandler, ExpenseAuthorizationHandler>();
 
 builder.Services.AddAuthorization(options =>
 {

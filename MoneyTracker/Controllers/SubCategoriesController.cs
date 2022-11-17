@@ -101,7 +101,7 @@ namespace MoneyTracker.Controllers
         public async Task<IActionResult> Create([Bind("SubCategoryId,Name,Description,DisplayOrder,CategoryId,RecordStatus,RecordStatusDate")] SubCategory subCategory)
         {
             var userId = this.getUserId();
-            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId || p.OwnerId == userId);
+            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId && p.OwnerId == userId);
             subCategory.OwnerId = userId;
             if (subCategory.Category == null)
             {

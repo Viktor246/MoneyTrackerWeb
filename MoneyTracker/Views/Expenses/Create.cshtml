@@ -1,0 +1,90 @@
+﻿@model MoneyTracker.Models.Expense
+
+@{
+    ViewData["Title"] = "Create";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Create</h1>
+
+<h4>Expense</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Value" class="control-label"></label>
+                <input asp-for="Value" class="form-control" />
+                <span asp-validation-for="Value" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateOfExpense" class="control-label"></label>
+                <input id="DateOfExpense" asp-for="DateOfExpense" class="form-control" />
+                <span asp-validation-for="DateOfExpense" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Category</label>
+                <select class="form-control" asp-items="ViewBag.categories" onchange="getUploadedFile(this)">
+                    <option>Please select category</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="SubCategoryId" class="control-label"></label>
+                <select id="subCategoryList" asp-for="SubCategoryId" class="form-control">
+                    <option>Select category first</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+@section Scripts{
+
+<script>
+    function getUploadedFile(Sle) { 
+        $.ajax({
+            url: "/Expenses/GetSubCategories",
+            data: {"CategoryID": Sle.value} ,
+            type: "POST",
+            dataType: "json",
+            success: function (data) {
+                if(data.length == 0)
+                {
+                    var s = '<option value="-1">Category has no sub categories</option>'
+                }
+                else
+                {
+                    var s = '<option value="-1">Please select sub category</option>'
+                    for (var i = 0; i < data.length; i++) {
+                            s += '<option value="' + data[i].subCategoryId + '">' + data[i].name + '</option>';
+                    }
+                }
+                $("#subCategoryList").html(s);
+
+            },
+            error: function (data) {
+                alert(data);
+            }
+        });
+    }
+    $(document).ready(function GetDate(date) {
+            var today = new Date();
+            var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+            var time = today.getHours() + ":" + today.getMinutes()
+            var dateTime = date + ' ' + time;
+            document.getElementById("DateOfExpense").value = dateTime;
+    });
+</script>
+}

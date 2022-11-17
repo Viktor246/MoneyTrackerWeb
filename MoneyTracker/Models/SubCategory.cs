@@ -28,6 +28,8 @@ namespace MoneyTracker.Models
 
         public Category Category { get; set; }
 
+        public ICollection<Expense> Expenses { get; set; }
+
         public string? OwnerId { get; set; }
 
         [DisplayName("Record Status")]
