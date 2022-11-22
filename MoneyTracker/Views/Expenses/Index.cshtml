@@ -16,21 +16,54 @@
         </div>
     </div>
 </div>
-
+<div class="container pb-1">
+    <div class="row">
+        <div class="col-10">        
+            @using (Html.BeginForm("Index", "Expenses", FormMethod.Get))
+            {
+                <div class="row">
+                    <div class="col-3">
+                        <label class="control-label">Find:</label>
+                        <input class="form-control me-sm-2" type="text" name="searchString" placeholder="Search">
+                    </div>
+                    <div class="col-3">
+                        <label class="control-label">In:</label>
+                        <select class="form-control" name="Filters" asp-items="ViewBag.Filters">
+                        </select>
+                    </div>
+                    <div class="col-1">
+                        <label class="control-label"></label>
+                        <input type="submit" value="Create" class="btn btn-secondary" />
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-2">
+            @using (Html.BeginForm("Index", "Expenses", FormMethod.Get))
+            {
+                <label class="control-label">Page size</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" value="@ViewBag.PageSize" name="pageSize">
+                    <button class="btn btn-primary" type="submit">+</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 <table class="table table-bordered table-striped" style="width:100%">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Description)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.Description), "Index", new { sortOrder = ViewBag.DescriptionSortParam })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Value)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.Value), "Index", new { sortOrder = ViewBag.ValueSortParam })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DateOfExpense)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.DateOfExpense), "Index", new { sortOrder = ViewBag.DateSortParam })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.SubCategory)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.SubCategory), "Index", new { sortOrder = ViewBag.SubCatSortParam })
             </th>
             <th></th>
         </tr>
@@ -59,3 +92,27 @@
         }
     </tbody>
 </table>
+<div>
+    <ul class="pagination">
+        <li class="page-item @ViewBag.FirstPage">
+            <a class="page-link" asp-controller="Expenses" asp-action="Index" asp-route-page="1" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">&laquo;</a>
+        </li>
+        @foreach (int item in ViewBag.Pages)
+        {
+            if (item.ToString() == ViewBag.Page)
+            {
+                <li class="page-item active">
+                    <a class="page-link" asp-controller="Expenses" asp-action="Index" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                </li>
+            } else
+            {
+                <li class="page-item">
+                    <a class="page-link" asp-controller="Expenses" asp-action="Index" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                </li>
+            }
+        }
+        <li class="page-item @ViewBag.LastPage">
+            <a class="page-link" asp-controller="Expenses" asp-action="Index" asp-route-page="@ViewBag.PageCount" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">&raquo;</a>
+        </li>
+    </ul>
+</div>

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MoneyTracker.Data;
 using MoneyTracker.Models;
+using MoneyTracker.Utility;
 
 namespace MoneyTracker.Controllers
 {
@@ -24,10 +25,120 @@ namespace MoneyTracker.Controllers
         }
 
         // GET: Expenses
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder = "", string Filters = "", string searchString = "", int pageSize = 10, int page = 1)
         {
+            ViewBag.CurrentSortOrder = sortOrder;
+            ViewBag.CurrentFilters = Filters;
+            ViewBag.CurrentSearchString = searchString;
             var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.getUserId());
-            return View(await applicationDBContext.ToListAsync());
+            if (pageSize <= 0)
+            {
+                pageSize = 10;
+            }
+            if (page <= 0)
+            {
+                page = 1;
+            }
+
+            List<SelectListItem> filters = new List<SelectListItem>();
+            filters.Add(new SelectListItem { Text = "--Select option--", Value = "" });
+            filters.Add(new SelectListItem { Text = "Description", Value = "Description" });
+            filters.Add(new SelectListItem { Text = "Sub category", Value = "Sub category" });
+            filters.Add(new SelectListItem { Text = "Value", Value = "Value" });
+            filters.Add(new SelectListItem { Text = "Date", Value = "Date" });
+            ViewBag.Filters = filters;
+            ViewBag.DateSortParam = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
+            ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
+            ViewBag.ValueSortParam = sortOrder == "value" ? "value_desc" : "value";
+            ViewBag.SubCatSortParam = sortOrder == "subcat" ? "subcat_desc" : "subcat";
+
+            if (!String.IsNullOrEmpty(Filters))
+            {
+                if (!String.IsNullOrEmpty(searchString))
+                {
+                    switch (Filters)
+                    {
+                        case "Description":
+                            applicationDBContext = applicationDBContext.Where(s => s.Description.Contains(searchString));
+                            break;
+                        case "Sub category":
+                            applicationDBContext = applicationDBContext.Where(s => s.SubCategory.Name.Contains(searchString));
+                            break;
+                        case "Value":
+                            float number;
+                            if (!float.TryParse(searchString, out number)) { TempData["error"] = "Invalid number format!"; break; }
+                            applicationDBContext = applicationDBContext.Where(s => s.Value == number);
+                            break;
+                        case "Date":
+                            DateTime date;
+                            if (!DateTime.TryParse(searchString, out date)) { TempData["error"] = "Invalid date format!"; break; }
+                            applicationDBContext = applicationDBContext.Where(s => s.DateOfExpense == date);
+                            break;
+                        default:
+                            break;
+                    }
+
+                }
+            }
+
+            switch (sortOrder)
+            {
+                case "date_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.DateOfExpense);
+                    break;
+                case "desc_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
+                    break;
+                case "desc":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.Description);
+                    break;
+                case "value_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Value);
+                    break;
+                case "value":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.Value);
+                    break;
+                case "subcat_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.SubCategoryId);
+                    break;
+                case "subcat":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.SubCategoryId);
+                    break;
+                default:
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.DateOfExpense);
+                    break;
+            }
+
+            int countOfExpenses = applicationDBContext.Count();
+            int pageCount = countOfExpenses / pageSize;
+            if (countOfExpenses % pageSize > 0)
+            {
+                pageCount++;
+            }
+
+            ViewBag.Pages = Utilities.getPaginationList(page, pageCount);
+            ViewBag.Page = page.ToString();
+            ViewBag.PageSize = pageSize.ToString();
+            ViewBag.PageCount = pageCount.ToString();
+
+            if (page == 1)
+            {
+                ViewBag.FirstPage = "disabled";
+
+            } else
+            {
+                ViewBag.FirstPage = "";
+            }
+            if (page == pageCount)
+            {
+                ViewBag.LastPage = "disabled";
+
+            }
+            else
+            {
+                ViewBag.LastPage = "";
+            }
+            return View(await applicationDBContext.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync());
         }
 
         /*
