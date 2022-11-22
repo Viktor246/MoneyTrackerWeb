@@ -25,16 +25,16 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.Name), "Index", new { sortOrder = ViewBag.NameSortParam, categoryId = ViewBag.CategoryId })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Description)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.Description), "Index", new { sortOrder = ViewBag.DescriptionSortParam, categoryId = ViewBag.CategoryId })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.DisplayOrder)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.DisplayOrder), "Index", new { sortOrder = ViewBag.DisplayOrderSortParam, categoryId = ViewBag.CategoryId })
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Category)
+                @Html.ActionLink(Html.DisplayNameFor(model => model.Category), "Index", new { sortOrder = ViewBag.CategorySortParam, categoryId = ViewBag.CategoryId })
             </th>
             <th></th>
         </tr>
@@ -66,3 +66,48 @@
         }
     </tbody>
 </table>
+<div class="container pb-1">
+    <div class="row">
+        <div class="col-9">
+            <ul class="pagination">
+                <li class="page-item @ViewBag.FirstPage">
+                    <a class="page-link" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="1" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-pageSize="@ViewBag.PageSize">&laquo;</a>
+                </li>
+                @foreach (int item in ViewBag.Pages)
+                {
+                    if (item.ToString() == ViewBag.Page)
+                    {
+                        <li class="page-item active">
+                            <a class="page-link" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                        </li>
+                    }
+                }
+                <li class="page-item @ViewBag.LastPage">
+                    <a class="page-link" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="@ViewBag.PageCount" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-pageSize="@ViewBag.PageSize">&raquo;</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-3">
+            @using (Html.BeginForm("Index", "SubCategories", FormMethod.Get))
+            {
+                <div class="row">
+                    <div class="col-7 text-end align-self-lg-center">
+                        <label class="control-label">Page size</label>
+                    </div>
+                    <div class="col-5">
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="@ViewBag.PageSize" name="pageSize">
+                            <button class="btn btn-primary" type="submit">+</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

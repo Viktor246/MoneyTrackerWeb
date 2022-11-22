@@ -6,9 +6,12 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.EntityFrameworkCore;
 using MoneyTracker.Data;
 using MoneyTracker.Models;
+using MoneyTracker.Utility;
+using static NuGet.Packaging.PackagingConstants;
 
 namespace MoneyTracker.Controllers
 {
@@ -25,14 +28,25 @@ namespace MoneyTracker.Controllers
         }
 
         // GET: SubCategories/Index/5
-        public async Task<IActionResult> Index(int? categoryId)
+        public async Task<IActionResult> Index(int? categoryId, string sortOrder = "", int pageSize = 10, int page = 1)
         {
+            ViewBag.CurrentSortOrder = sortOrder;
+
+            if (pageSize <= 0)
+            {
+                pageSize = 10;
+            }
+            if (page <= 0)
+            {
+                page = 1;
+            }
+
             if (categoryId == null)
             {
                 return NotFound();
             }
 
-            var category= await _context.Categories.FindAsync(categoryId);
+            var category = await _context.Categories.FindAsync(categoryId);
             var result = await _authorizationService.AuthorizeAsync(User, category, "isOwner");
             if (!result.Succeeded)
             {
@@ -45,9 +59,76 @@ namespace MoneyTracker.Controllers
                     return new ChallengeResult();
                 }
             }
+
             ViewBag.CategoryId = categoryId;
-            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s=>s.CategoryId == categoryId && s.OwnerId == this.getUserId());
-            return View(await applicationDBContext.ToListAsync());
+            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s => s.CategoryId == categoryId && s.OwnerId == this.getUserId());
+
+            ViewBag.DisplayOrderSortParam = String.IsNullOrEmpty(sortOrder) ? "display_order_desc" : "";
+            ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
+            ViewBag.NameSortParam = sortOrder == "name" ? "name_desc" : "name";
+            ViewBag.CategorySortParam = sortOrder == "category" ? "category_desc" : "category";
+
+
+            switch (sortOrder)
+            {
+                case "display_order_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.DisplayOrder);
+                    break;
+                case "desc_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
+                    break;
+                case "desc":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.Description);
+                    break;
+                case "name_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Name);
+                    break;
+                case "name":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.Name);
+                    break;
+                case "category_desc":
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.CategoryId);
+                    break;
+                case "category":
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.CategoryId);
+                    break;
+                default:
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.DisplayOrder);
+                    break;
+            }
+
+            int countOfItems = applicationDBContext.Count();
+            int pageCount = countOfItems / pageSize;
+            if (countOfItems % pageSize > 0)
+            {
+                pageCount++;
+            }
+
+            ViewBag.Pages = Utilities.getPaginationList(page, pageCount);
+            ViewBag.Page = page.ToString();
+            ViewBag.PageSize = pageSize.ToString();
+            ViewBag.PageCount = pageCount.ToString();
+
+            if (page == 1)
+            {
+                ViewBag.FirstPage = "disabled";
+
+            }
+            else
+            {
+                ViewBag.FirstPage = "";
+            }
+            if (page == pageCount)
+            {
+                ViewBag.LastPage = "disabled";
+
+            }
+            else
+            {
+                ViewBag.LastPage = "";
+            }
+            return View(await applicationDBContext.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync());
+
         }
         /*
         // GET: SubCategories/Details/5
@@ -175,19 +256,10 @@ namespace MoneyTracker.Controllers
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
 
             }
-            var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
-            if (!result.Succeeded)
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
-            }
+            subCategory.OwnerId = this.getUserId();
+
             ModelState.Remove("Category");
+            ModelState.Remove("Expenses");
             if (ModelState.IsValid)
             {
                 try

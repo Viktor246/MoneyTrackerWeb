@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MoneyTracker.Data;
 using MoneyTracker.Models;
+using MoneyTracker.Utility;
 using System.Security.Claims;
 
 namespace MoneyTracker.Controllers
@@ -18,10 +19,78 @@ namespace MoneyTracker.Controllers
             _authorizationService = authorizationService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(string sortOrder = "", int pageSize = 10, int page = 1)
         {
-            IEnumerable<Category> objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.getUserId());
-            return View(objectCategoryList);
+            ViewBag.CurrentSortOrder = sortOrder;
+
+            if (pageSize <= 0)
+            {
+                pageSize = 10;
+            }
+            if (page <= 0)
+            {
+                page = 1;
+            }
+            var objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.getUserId());
+            
+            ViewBag.DisplayOrderSortParam = String.IsNullOrEmpty(sortOrder) ? "display_order_desc" : "";
+            ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
+            ViewBag.NameSortParam = sortOrder == "name" ? "name_desc" : "name";
+            
+            switch (sortOrder)
+            {
+                case "display_order_desc":
+                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.DisplayOrder);
+                    break;
+                case "desc_desc":
+                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.Description);
+                    break;
+                case "desc":
+                    objectCategoryList = objectCategoryList.OrderBy(s => s.Description);
+                    break;
+                case "name_desc":
+                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.Name);
+                    break;
+                case "name":
+                    objectCategoryList = objectCategoryList.OrderBy(s => s.Name);
+                    break;
+                default:
+                    objectCategoryList = objectCategoryList.OrderBy(s => s.DisplayOrder);
+                    break;
+            }
+
+            int countOfItems = objectCategoryList.Count();
+            int pageCount = countOfItems / pageSize;
+            if (countOfItems % pageSize > 0)
+            {
+                pageCount++;
+            }
+
+            ViewBag.Pages = Utilities.getPaginationList(page, pageCount);
+            ViewBag.Page = page.ToString();
+            ViewBag.PageSize = pageSize.ToString();
+            ViewBag.PageCount = pageCount.ToString();
+
+            if (page == 1)
+            {
+                ViewBag.FirstPage = "disabled";
+
+            }
+            else
+            {
+                ViewBag.FirstPage = "";
+            }
+            if (page == pageCount)
+            {
+                ViewBag.LastPage = "disabled";
+
+            }
+            else
+            {
+                ViewBag.LastPage = "";
+            }
+            return View(await objectCategoryList.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync());
+
         }
         //GET
         public async Task<IActionResult> Edit(int? id)
@@ -57,23 +126,13 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Category obj)
         {
-            var result = await _authorizationService.AuthorizeAsync(User, obj, "isOwner");
-            if (!result.Succeeded)
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
-            }
             if (obj.Name == obj.DisplayOrder.ToString())
             {
                 ModelState.AddModelError("NameDisOrderMatch", "The Dispaly Order can not exactly match the Name of category.");
             }
+            obj.OwnerId = this.getUserId();
             ModelState.Remove("SubCategories");
+            ModelState.Remove("Expenses");
             if (ModelState.IsValid)
             {
                 obj.RecordStatus = 2;
