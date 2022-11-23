@@ -4,51 +4,48 @@
     ViewData["Title"] = "Create";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
-<h1>Create</h1>
-
-<h4>Expense</h4>
-<hr />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">
-            <div asp-validation-summary="All" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Value" class="control-label"></label>
-                <input asp-for="Value" class="form-control" />
-                <span asp-validation-for="Value" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="DateOfExpense" class="control-label"></label>
-                <input id="DateOfExpense" asp-for="DateOfExpense" class="form-control" />
-                <span asp-validation-for="DateOfExpense" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label class="control-label">Category</label>
-                <select class="form-control" asp-items="ViewBag.categories" onchange="getUploadedFile(this)">
-                    <option>Please select category</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label asp-for="SubCategoryId" class="control-label"></label>
-                <select id="subCategoryList" asp-for="SubCategoryId" class="form-control">
-                    <option>Select category first</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
+            <div class="p-3 mt-5">
+                <div class="row">
+                    <h2 class="text-primary">Create Expense</h2>
+                </div>
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-group">
+                    <label asp-for="Description" class="control-label"></label>
+                    <input asp-for="Description" class="form-control" />
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Value" class="control-label"></label>
+                    <input asp-for="Value" class="form-control" />
+                    <span asp-validation-for="Value" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="DateOfExpense" class="control-label"></label>
+                    <input id="DateOfExpense" asp-for="DateOfExpense" class="form-control" />
+                    <span asp-validation-for="DateOfExpense" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Category</label>
+                    <select class="form-control" asp-items="ViewBag.categories" onchange="getUploadedFile(this)">
+                        <option>Please select category</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label asp-for="SubCategoryId" class="control-label"></label>
+                    <select id="subCategoryList" asp-for="SubCategoryId" class="form-control">
+                        <option>Select category first</option>
+                    </select>
+                </div>
+                <input type="submit" value="Create" style="width:150px" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary" style="width:150px">
+                    Cancel
+                </a>
             </div>
         </form>
     </div>
-</div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
 </div>
 @section Scripts{
 

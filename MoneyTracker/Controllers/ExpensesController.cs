@@ -167,7 +167,7 @@ namespace MoneyTracker.Controllers
         {
             var userId = this.getUserId();
             var subcategories = _context.SubCategory.Where(c => c.OwnerId == userId);
-            var categories = _context.Categories.Where(c => c.OwnerId == userId);
+            var categories = _context.Categories.Where(c => c.OwnerId == userId).OrderBy(c => c.DisplayOrder);
             ViewData["categories"] = new SelectList(categories, "Id", "Name");
             ViewBag.Now = DateTime.Now;
             return View();
@@ -177,7 +177,7 @@ namespace MoneyTracker.Controllers
         public IActionResult GetSubCategories(int categoryId)
         {
 
-            var subCategories = _context.SubCategory.Where(c => c.CategoryId == categoryId && c.OwnerId == this.getUserId());
+            var subCategories = _context.SubCategory.Where(c => c.CategoryId == categoryId && c.OwnerId == this.getUserId()).OrderBy(c => c.DisplayOrder);
 
             return new JsonResult(subCategories);
         }
