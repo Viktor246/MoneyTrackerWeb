@@ -74,6 +74,11 @@ namespace MoneyTracker.Areas.Identity.Pages.Account.Manage
             [Phone]
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
+
+            [Required]
+            [Display(Name = "Day of cycle reset")]
+            [Range(1,31)]
+            public int DayOfCycleReset { get; set; }
         }
 
         private async Task LoadAsync(ApplicationUser user)
@@ -88,7 +93,8 @@ namespace MoneyTracker.Areas.Identity.Pages.Account.Manage
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 DOB = user.DOB,
-                PhoneNumber = phoneNumber
+                PhoneNumber = phoneNumber,
+                DayOfCycleReset = user.DayOfCycleReset
             };
         }
 
@@ -141,6 +147,11 @@ namespace MoneyTracker.Areas.Identity.Pages.Account.Manage
             if (Input.DOB != user.DOB)
             {
                 user.DOB = Input.DOB;
+            }
+
+            if (Input.DayOfCycleReset != user.DayOfCycleReset)
+            {
+                user.DayOfCycleReset = Input.DayOfCycleReset;
             }
 
             await _userManager.UpdateAsync(user);
