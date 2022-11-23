@@ -211,7 +211,7 @@ namespace MoneyTracker.Controllers
             ViewBag.Now = DateTime.Now;
             return View(expense);
         }
-        /*
+
         // GET: Expenses/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -221,6 +221,8 @@ namespace MoneyTracker.Controllers
             }
 
             var expense = await _context.Expense.FindAsync(id);
+            _context.Entry(expense).Reference(e => e.SubCategory).Load();
+            _context.Entry(expense.SubCategory).Reference(e => e.Category).Load();
             if (expense == null)
             {
                 return NotFound();
@@ -238,7 +240,8 @@ namespace MoneyTracker.Controllers
                     return new ChallengeResult();
                 }
             }
-            ViewData["SubCategoryId"] = new SelectList(_context.SubCategory, "SubCategoryId", "Name", expense.SubCategoryId);
+            ViewBag.Categories = new SelectList(_context.Categories.Where(c => c.OwnerId == expense.OwnerId), "Id", "Name", expense.SubCategory.Category.Id);
+            ViewData["SubCategoryId"] = new SelectList(_context.SubCategory.Where(c => c.OwnerId == expense.OwnerId && c.CategoryId == expense.SubCategory.Category.Id), "SubCategoryId", "Name", expense.SubCategoryId);
             return View(expense);
         }
 
@@ -253,7 +256,13 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
+            expense.SubCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == expense.OwnerId);
+            if (expense.SubCategory == null)
+            {
+                ModelState.AddModelError("SubCategoryIsNull", "Selected sub category doesn't exist in database!");
 
+            }
+            ModelState.Remove("SubCategory");
             if (ModelState.IsValid)
             {
                 try
@@ -277,7 +286,7 @@ namespace MoneyTracker.Controllers
             ViewData["SubCategoryId"] = new SelectList(_context.SubCategory, "SubCategoryId", "Name", expense.SubCategoryId);
             return View(expense);
         }
-        */
+        
         // GET: Expenses/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
