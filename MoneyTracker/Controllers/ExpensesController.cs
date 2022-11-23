@@ -35,6 +35,10 @@ namespace MoneyTracker.Controllers
             ViewBag.CurrentSearchString = searchString;
 
             var user = await _userContext.Users.FindAsync(this.GetUserId());
+            if (user == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.GetUserId());
 
             if (cycle == 0 || cycle > DateTime.Now.Month)
@@ -45,7 +49,7 @@ namespace MoneyTracker.Controllers
             {
                 year = DateTime.Now.Year;
             }
-            DateTime minDate = new DateTime(year, cycle, user.DayOfCycleReset);
+            DateTime minDate = new(year, cycle, user.DayOfCycleReset);
 
             ViewBag.Month = cycle;
 
@@ -57,10 +61,14 @@ namespace MoneyTracker.Controllers
             {
                 cycle++;
             }
-            DateTime maxDate = new DateTime(year, cycle, user.DayOfCycleReset);
+            DateTime maxDate = new(year, cycle, user.DayOfCycleReset);
 
             var minYearExpense = applicationDBContext.OrderBy(e => e.DateOfExpense).FirstOrDefault();
-            List<SelectListItem> years = new List<SelectListItem>();
+            if (minYearExpense == null)
+            {
+                return NotFound();
+            }
+            List<SelectListItem> years = new();
             for (int i = minYearExpense.DateOfExpense.Year; i <= DateTime.Now.Year; i++)
             {
                 if (i == year)
@@ -83,7 +91,9 @@ namespace MoneyTracker.Controllers
                     switch (Filters)
                     {
                         case "Description":
-                            applicationDBContext = applicationDBContext.Where(s => s.Description.Contains(searchString));
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+                            applicationDBContext = applicationDBContext.Where(predicate: s => s.Description.Contains(searchString));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                             break;
                         case "Sub category":
                             applicationDBContext = applicationDBContext.Where(s => s.SubCategory.Name.Contains(searchString));
@@ -105,12 +115,14 @@ namespace MoneyTracker.Controllers
                 }
             }
 
-            List<SelectListItem> filters = new List<SelectListItem>();
-            filters.Add(new SelectListItem { Text = "--Select option--", Value = "" });
-            filters.Add(new SelectListItem { Text = "Description", Value = "Description" });
-            filters.Add(new SelectListItem { Text = "Sub category", Value = "Sub category" });
-            filters.Add(new SelectListItem { Text = "Value", Value = "Value" });
-            filters.Add(new SelectListItem { Text = "Date", Value = "Date" });
+            List<SelectListItem> filters = new()
+            {
+                new SelectListItem { Text = "--Select option--", Value = "" },
+                new SelectListItem { Text = "Description", Value = "Description" },
+                new SelectListItem { Text = "Sub category", Value = "Sub category" },
+                new SelectListItem { Text = "Value", Value = "Value" },
+                new SelectListItem { Text = "Date", Value = "Date" }
+            };
             ViewBag.Filters = filters;
             ViewBag.DateSortParam = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
@@ -224,6 +236,10 @@ namespace MoneyTracker.Controllers
             }
 
             SubCategory? subCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
+            if (subCategory == null)
+            {
+                return NotFound();
+            }
             expense.SubCategory = subCategory;
             expense.OwnerId = userId;
             if (expense.SubCategory == null)
@@ -265,6 +281,10 @@ namespace MoneyTracker.Controllers
             _context.Entry(expense.SubCategory).Reference(e => e.Category).Load();
 
             var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -292,7 +312,13 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
-            expense.SubCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == expense.OwnerId);
+
+            SubCategory? subCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == expense.OwnerId);
+            if (subCategory == null)
+            {
+                return NotFound();
+            }
+            expense.SubCategory = subCategory;
             if (expense.SubCategory == null)
             {
                 ModelState.AddModelError("SubCategoryIsNull", "Selected sub category doesn't exist in database!");
@@ -341,6 +367,10 @@ namespace MoneyTracker.Controllers
             }
 
             var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -371,6 +401,10 @@ namespace MoneyTracker.Controllers
                 _context.Expense.Remove(expense);
             }
             var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)

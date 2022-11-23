@@ -94,7 +94,9 @@ namespace MoneyTracker.Controllers
                     switch (Filters)
                     {
                         case "Description":
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                             applicationDBContext = applicationDBContext.Where(predicate: s => s.Description.Contains(searchString));
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                             break;
                         case "Value":
                             float number;

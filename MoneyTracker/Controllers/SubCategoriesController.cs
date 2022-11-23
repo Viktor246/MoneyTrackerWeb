@@ -48,6 +48,10 @@ namespace MoneyTracker.Controllers
 
             var category = await _context.Categories.FindAsync(categoryId);
             var result = await _authorizationService.AuthorizeAsync(User, category, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -142,6 +146,10 @@ namespace MoneyTracker.Controllers
             }
             var category = await _context.Categories.FindAsync(categoryId);
             var result = await _authorizationService.AuthorizeAsync(User, category, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -188,7 +196,15 @@ namespace MoneyTracker.Controllers
                 }
                 catch (Exception e)
                 {
-                    ModelState.AddModelError("DBError", e.InnerException.Message);
+                    if (e.InnerException == null)
+                    {
+                        ModelState.AddModelError("DBError", "Unknwon error");
+
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("DBError", e.InnerException.Message);
+                    }
                     return View(subCategory);
                 }
                 TempData["success"] = "Sub Category created successfully!";
@@ -211,6 +227,10 @@ namespace MoneyTracker.Controllers
                 return NotFound();
             }
             var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -238,7 +258,10 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
-            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId);
+
+            Category? category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId);
+            if (category == null) { return NotFound(); };
+            subCategory.Category = category;
             if (subCategory.Category == null)
             {
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
@@ -257,7 +280,8 @@ namespace MoneyTracker.Controllers
                 }
                 catch (Exception e)
                 {
-                    ModelState.AddModelError("DBError", e.InnerException.Message);
+
+                    ModelState.AddModelError("DBError", (e.InnerException == null ) ? "Unknown error" : e.InnerException.Message);
                     return View(subCategory);
                 }
                 TempData["success"] = "Sub Category edited successfully!";
@@ -282,6 +306,10 @@ namespace MoneyTracker.Controllers
                 return NotFound();
             }
             var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -308,8 +336,11 @@ namespace MoneyTracker.Controllers
                 return Problem("Entity set 'ApplicationDBContext.SubCategory'  is null.");
             }
             var subCategory = await _context.SubCategory.FindAsync(id);
-
             var result = await _authorizationService.AuthorizeAsync(User, subCategory, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -326,7 +357,10 @@ namespace MoneyTracker.Controllers
             {
                 _context.SubCategory.Remove(subCategory);
             }
-            
+            if (subCategory == null)
+            {
+                return NotFound();
+            }
             await _context.SaveChangesAsync();
             TempData["success"] = "Sub Category deleted successfully!";
             return RedirectToAction(nameof(Index), new { categoryId = subCategory.CategoryId });

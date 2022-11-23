@@ -99,8 +99,6 @@ namespace MoneyTracker.Controllers
             {
                 return LocalRedirect("/Identity/Account/Login");
             }
-
-
             if (!result.Succeeded)
             {
                 return User.Identity.IsAuthenticated ? new ForbidResult() : new ChallengeResult();
@@ -131,7 +129,15 @@ namespace MoneyTracker.Controllers
                 }
                 catch (Exception e)
                 {
-                    ModelState.AddModelError("DBError", errorMessage: e.InnerException.Message);
+                    if (e.InnerException == null)
+                    {
+                        ModelState.AddModelError("DBError", errorMessage: "Unknown error");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("DBError", errorMessage: e.InnerException.Message);
+
+                    }
                     return View(obj);
                 }
                 TempData["success"] = "Category edited successfully!";
@@ -162,7 +168,15 @@ namespace MoneyTracker.Controllers
                 _db.SaveChanges();
                 }
                 catch(Exception e) {
-                    ModelState.AddModelError("DBError", e.InnerException.Message);
+                    if (e.InnerException == null)
+                    {
+                        ModelState.AddModelError("DBError", errorMessage: "Unknown error");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("DBError", errorMessage: e.InnerException.Message);
+
+                    }
                     return View(obj);
                 }
                 TempData["success"] = "Category created successfully!";
@@ -186,6 +200,12 @@ namespace MoneyTracker.Controllers
             }
 
             var result = await _authorizationService.AuthorizeAsync(User, categoryFromDb, "isOwner");
+
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Login");
+            }
+
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -211,6 +231,10 @@ namespace MoneyTracker.Controllers
             }
 
             var result = await _authorizationService.AuthorizeAsync(User, obj, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Home/Identity/Redirect");
+            }
             if (!result.Succeeded)
             {
                 if (User.Identity.IsAuthenticated)
@@ -230,7 +254,14 @@ namespace MoneyTracker.Controllers
             }
             catch (Exception e)
             {
-                ModelState.AddModelError("DBError", e.InnerException.Message);
+                if (e.InnerException == null)
+                {
+                    ModelState.AddModelError("DBError", "Unknown");
+                }
+                else
+                {
+                    ModelState.AddModelError("DBError", e.InnerException.Message);
+                }
                 return View(obj);
             }
             TempData["success"] = "Category deleted successfully!";

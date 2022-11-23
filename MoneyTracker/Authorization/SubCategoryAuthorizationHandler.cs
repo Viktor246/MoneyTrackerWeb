@@ -11,6 +11,10 @@ namespace MoneyTracker.Authorization
                                                        IsOwnerRequirement requirement,
                                                        SubCategory resource)
         {
+            if (resource.OwnerId == null)
+            {
+                return Task.CompletedTask;
+            }
             if (context.User.HasClaim(ClaimTypes.NameIdentifier, resource.OwnerId))
             {
                 context.Succeed(requirement);
