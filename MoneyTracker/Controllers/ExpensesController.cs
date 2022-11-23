@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using MoneyTracker.Areas.Identity.Data;
 using MoneyTracker.Data;
 using MoneyTracker.Models;
 using MoneyTracker.Utility;
@@ -17,28 +18,63 @@ namespace MoneyTracker.Controllers
     {
         private readonly ApplicationDBContext _context;
         private readonly IAuthorizationService _authorizationService;
+        private readonly ApplicationUserContext _userContext;
 
-        public ExpensesController(ApplicationDBContext context, IAuthorizationService authorizationService)
+        public ExpensesController(ApplicationDBContext context, IAuthorizationService authorizationService, ApplicationUserContext userContext)
         {
             _context = context;
             _authorizationService = authorizationService;
+            _userContext = userContext;
         }
 
         // GET: Expenses
-        public async Task<IActionResult> Index(string sortOrder = "", string Filters = "", string searchString = "", int pageSize = 10, int page = 1)
+        public async Task<IActionResult> Index(string sortOrder = "", string Filters = "", string searchString = "", int pageSize = 10, int page = 1, int cycle = 0, int year = 0)
         {
             ViewBag.CurrentSortOrder = sortOrder;
             ViewBag.CurrentFilters = Filters;
             ViewBag.CurrentSearchString = searchString;
+
+            var user = await _userContext.Users.FindAsync(this.getUserId());
             var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.getUserId());
-            if (pageSize <= 0)
+
+            if (cycle == 0 || cycle > DateTime.Now.Month)
             {
-                pageSize = 10;
+                cycle = DateTime.Now.Month;
             }
-            if (page <= 0)
+            if (year == 0)
             {
-                page = 1;
+                year = DateTime.Now.Year;
             }
+            DateTime minDate = new DateTime(year, cycle, user.DayOfCycleReset);
+
+            ViewBag.Month = cycle;
+
+            if (cycle == 12)
+            {
+                cycle = 1;
+                year++;
+            } else
+            {
+                cycle++;
+            }
+            DateTime maxDate = new DateTime(year, cycle, user.DayOfCycleReset);
+
+            var minYearExpense = applicationDBContext.OrderBy(e => e.DateOfExpense).FirstOrDefault();
+            List<SelectListItem> years = new List<SelectListItem>();
+            for (int i = minYearExpense.DateOfExpense.Year; i <= DateTime.Now.Year; i++)
+            {
+                if (i == year)
+                {
+                    years.Add(new SelectListItem { Text = "" + i, Value = i.ToString(), Selected = true });
+                }
+                else
+                {
+                    years.Add(new SelectListItem { Text = "" + i, Value = i.ToString(), Selected = false });
+                }
+            }
+            ViewBag.Years = years;
+
+            applicationDBContext = applicationDBContext.Where(e => e.DateOfExpense > minDate && e.DateOfExpense < maxDate);
 
             List<SelectListItem> filters = new List<SelectListItem>();
             filters.Add(new SelectListItem { Text = "--Select option--", Value = "" });
@@ -109,6 +145,14 @@ namespace MoneyTracker.Controllers
                     break;
             }
 
+            if (pageSize <= 0)
+            {
+                pageSize = 10;
+            }
+            if (page <= 0)
+            {
+                page = 1;
+            }
             int countOfExpenses = applicationDBContext.Count();
             int pageCount = countOfExpenses / pageSize;
             if (countOfExpenses % pageSize > 0)

@@ -18,22 +18,41 @@
 </div>
 <div class="container pb-1">
     <div class="row">
-        <div class="col-10">        
+        <div class="col-6">        
             @using (Html.BeginForm("Index", "Expenses", FormMethod.Get))
             {
                 <div class="row">
-                    <div class="col-3">
+                    <div class="col-5">
                         <label class="control-label">Find:</label>
                         <input class="form-control me-sm-2" type="text" name="searchString" placeholder="Search">
                     </div>
-                    <div class="col-3">
+                    <div class="col-5">
                         <label class="control-label">In:</label>
                         <select class="form-control" name="Filters" asp-items="ViewBag.Filters">
                         </select>
                     </div>
-                    <div class="col-1">
+                    <div class="col-2">
                         <label class="control-label"></label>
                         <input type="submit" value="Search" class="btn btn-secondary" />
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-6">
+            @using (Html.BeginForm("Index", "Expenses", FormMethod.Get))
+            {
+                <div class="row justify-content-end">
+                    <div class="col-2">
+                        <label class="control-label">Year:</label>
+                        <select class="form-control" name="year" asp-items="ViewBag.Years">
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <label class="control-label">Cycle:</label>
+                        <div class="input-group">
+                            <input class="form-control" type="number" step="1" name="cycle" value="@ViewBag.Month">
+                            <input type="button" value="+" class="btn btn-secondary" />
+                        </div>
                     </div>
                 </div>
             }
