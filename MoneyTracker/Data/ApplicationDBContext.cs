@@ -14,5 +14,8 @@ namespace MoneyTracker.Data
         public DbSet<MoneyTracker.Models.SubCategory> SubCategory { get; set; }
 
         public DbSet<MoneyTracker.Models.Expense> Expense { get; set; }
+
+        public DbSet<MoneyTracker.Models.Income> Income { get; set; }
+
     }
 }

@@ -14,20 +14,20 @@ using MoneyTracker.Utility;
 
 namespace MoneyTracker.Controllers
 {
-    public class ExpensesController : Controller
+    public class IncomesController : Controller
     {
         private readonly ApplicationDBContext _context;
         private readonly IAuthorizationService _authorizationService;
         private readonly ApplicationUserContext _userContext;
 
-        public ExpensesController(ApplicationDBContext context, IAuthorizationService authorizationService, ApplicationUserContext userContext)
+        public IncomesController(ApplicationDBContext context, IAuthorizationService authorizationService, ApplicationUserContext userContext)
         {
             _context = context;
             _authorizationService = authorizationService;
             _userContext = userContext;
         }
 
-        // GET: Expenses
+        // GET: Incomes
         public async Task<IActionResult> Index(string sortOrder = "", string Filters = "", string searchString = "", int pageSize = 10, int page = 1, int cycle = 0, int year = 0)
         {
             ViewBag.CurrentSortOrder = sortOrder;
@@ -35,7 +35,7 @@ namespace MoneyTracker.Controllers
             ViewBag.CurrentSearchString = searchString;
 
             var user = await _userContext.Users.FindAsync(this.getUserId());
-            var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.getUserId());
+            var applicationDBContext = _context.Income.Where(e => e.OwnerId == this.getUserId());
 
             if (cycle == 0 || cycle > DateTime.Now.Month)
             {
@@ -45,6 +45,7 @@ namespace MoneyTracker.Controllers
             {
                 year = DateTime.Now.Year;
             }
+
             DateTime minDate = new DateTime(year, cycle, user.DayOfCycleReset);
 
             ViewBag.Month = cycle;
@@ -53,15 +54,17 @@ namespace MoneyTracker.Controllers
             {
                 cycle = 1;
                 year++;
-            } else
+            }
+            else
             {
                 cycle++;
             }
             DateTime maxDate = new DateTime(year, cycle, user.DayOfCycleReset);
 
-            var minYearExpense = applicationDBContext.OrderBy(e => e.DateOfExpense).FirstOrDefault();
+            var minYearIncome = applicationDBContext.OrderBy(e => e.Date).FirstOrDefault();
+
             List<SelectListItem> years = new List<SelectListItem>();
-            for (int i = minYearExpense.DateOfExpense.Year; i <= DateTime.Now.Year; i++)
+            for (int i = minYearIncome.Date.Year; i <= DateTime.Now.Year; i++)
             {
                 if (i == year)
                 {
@@ -74,7 +77,7 @@ namespace MoneyTracker.Controllers
             }
             ViewBag.Years = years;
 
-            applicationDBContext = applicationDBContext.Where(e => e.DateOfExpense > minDate && e.DateOfExpense < maxDate);
+            applicationDBContext = applicationDBContext.Where(e => e.Date > minDate && e.Date < maxDate);
 
             if (!String.IsNullOrEmpty(Filters))
             {
@@ -85,9 +88,6 @@ namespace MoneyTracker.Controllers
                         case "Description":
                             applicationDBContext = applicationDBContext.Where(s => s.Description.Contains(searchString));
                             break;
-                        case "Sub category":
-                            applicationDBContext = applicationDBContext.Where(s => s.SubCategory.Name.Contains(searchString));
-                            break;
                         case "Value":
                             float number;
                             if (!float.TryParse(searchString, out number)) { TempData["error"] = "Invalid number format!"; break; }
@@ -96,7 +96,7 @@ namespace MoneyTracker.Controllers
                         case "Date":
                             DateTime date;
                             if (!DateTime.TryParse(searchString, out date)) { TempData["error"] = "Invalid date format!"; break; }
-                            applicationDBContext = applicationDBContext.Where(s => s.DateOfExpense == date);
+                            applicationDBContext = applicationDBContext.Where(s => s.Date == date);
                             break;
                         default:
                             break;
@@ -108,19 +108,17 @@ namespace MoneyTracker.Controllers
             List<SelectListItem> filters = new List<SelectListItem>();
             filters.Add(new SelectListItem { Text = "--Select option--", Value = "" });
             filters.Add(new SelectListItem { Text = "Description", Value = "Description" });
-            filters.Add(new SelectListItem { Text = "Sub category", Value = "Sub category" });
             filters.Add(new SelectListItem { Text = "Value", Value = "Value" });
             filters.Add(new SelectListItem { Text = "Date", Value = "Date" });
             ViewBag.Filters = filters;
             ViewBag.DateSortParam = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
             ViewBag.ValueSortParam = sortOrder == "value" ? "value_desc" : "value";
-            ViewBag.SubCatSortParam = sortOrder == "subcat" ? "subcat_desc" : "subcat";
-           
+
             switch (sortOrder)
             {
                 case "date_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.DateOfExpense);
+                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Date);
                     break;
                 case "desc_desc":
                     applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
@@ -134,14 +132,8 @@ namespace MoneyTracker.Controllers
                 case "value":
                     applicationDBContext = applicationDBContext.OrderBy(s => s.Value);
                     break;
-                case "subcat_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.SubCategoryId);
-                    break;
-                case "subcat":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.SubCategoryId);
-                    break;
                 default:
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.DateOfExpense);
+                    applicationDBContext = applicationDBContext.OrderBy(s => s.Date);
                     break;
             }
 
@@ -169,7 +161,8 @@ namespace MoneyTracker.Controllers
             {
                 ViewBag.FirstPage = "disabled";
 
-            } else
+            }
+            else
             {
                 ViewBag.FirstPage = "";
             }
@@ -182,141 +175,88 @@ namespace MoneyTracker.Controllers
             {
                 ViewBag.LastPage = "";
             }
+
             return View(await applicationDBContext.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync());
         }
 
-        /*
-        // GET: Expenses/Details/5
+        // GET: Incomes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null || _context.Expense == null)
+            if (id == null || _context.Income == null)
             {
                 return NotFound();
             }
 
-            var expense = await _context.Expense
-                .Include(e => e.Category)
-                .Include(e => e.SubCategory)
+            var income = await _context.Income
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (expense == null)
+            if (income == null)
             {
                 return NotFound();
             }
 
-            return View(expense);
+            return View(income);
         }
-        */
-        // GET: Expenses/Create
+
+        // GET: Incomes/Create
         public IActionResult Create()
         {
-            var userId = this.getUserId();
-            var subcategories = _context.SubCategory.Where(c => c.OwnerId == userId);
-            var categories = _context.Categories.Where(c => c.OwnerId == userId).OrderBy(c => c.DisplayOrder);
-            ViewData["categories"] = new SelectList(categories, "Id", "Name");
-            ViewBag.Now = DateTime.Now;
             return View();
         }
 
-        [HttpPost]
-        public IActionResult GetSubCategories(int categoryId)
-        {
-
-            var subCategories = _context.SubCategory.Where(c => c.CategoryId == categoryId && c.OwnerId == this.getUserId()).OrderBy(c => c.DisplayOrder);
-
-            return new JsonResult(subCategories);
-        }
-
-        // POST: Expenses/Create
+        // POST: Incomes/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Description,Value,DateOfExpense,SubCategoryId,RecordStatus,RecordStatusDate")] Expense expense)
+        public async Task<IActionResult> Create([Bind("Id,Description,Value,Date,OwnerId,RecordStatus,RecordStatusDate")] Income income)
         {
-
-            var userId = this.getUserId();
-            expense.SubCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
-            expense.OwnerId = userId;
-            if (expense.SubCategory == null)
-            {
-                ModelState.AddModelError("SubCategoryIsNull", "Selected sub category doesn't exist in database!");
-
-            }
-            ModelState.Remove("SubCategory");
-            ModelState.Remove("SubCategoryId");
             if (ModelState.IsValid)
             {
-                _context.Add(expense);
+                _context.Add(income);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            var categories = _context.Categories.Where(c => c.OwnerId == userId);
-            ViewData["categories"] = new SelectList(categories, "Id", "Name");
-            ViewBag.Now = DateTime.Now;
-            return View(expense);
+            return View(income);
         }
 
-        // GET: Expenses/Edit/5
+        // GET: Incomes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.Expense == null)
+            if (id == null || _context.Income == null)
             {
                 return NotFound();
             }
 
-            var expense = await _context.Expense.FindAsync(id);
-            _context.Entry(expense).Reference(e => e.SubCategory).Load();
-            _context.Entry(expense.SubCategory).Reference(e => e.Category).Load();
-            if (expense == null)
+            var income = await _context.Income.FindAsync(id);
+            if (income == null)
             {
                 return NotFound();
             }
-
-            var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
-            if (!result.Succeeded)
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
-            }
-            ViewBag.Categories = new SelectList(_context.Categories.Where(c => c.OwnerId == expense.OwnerId), "Id", "Name", expense.SubCategory.Category.Id);
-            ViewData["SubCategoryId"] = new SelectList(_context.SubCategory.Where(c => c.OwnerId == expense.OwnerId && c.CategoryId == expense.SubCategory.Category.Id), "SubCategoryId", "Name", expense.SubCategoryId);
-            return View(expense);
+            return View(income);
         }
 
-        // POST: Expenses/Edit/5
+        // POST: Incomes/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Description,Value,DateOfExpense,SubCategoryId,OwnerId,RecordStatus,RecordStatusDate")] Expense expense)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Description,Value,Date,OwnerId,RecordStatus,RecordStatusDate")] Income income)
         {
-            if (id != expense.Id)
+            if (id != income.Id)
             {
                 return NotFound();
             }
-            expense.SubCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == expense.OwnerId);
-            if (expense.SubCategory == null)
-            {
-                ModelState.AddModelError("SubCategoryIsNull", "Selected sub category doesn't exist in database!");
 
-            }
-            ModelState.Remove("SubCategory");
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(expense);
+                    _context.Update(income);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ExpenseExists(expense.Id))
+                    if (!IncomeExists(income.Id))
                     {
                         return NotFound();
                     }
@@ -327,77 +267,49 @@ namespace MoneyTracker.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["SubCategoryId"] = new SelectList(_context.SubCategory, "SubCategoryId", "Name", expense.SubCategoryId);
-            return View(expense);
+            return View(income);
         }
-        
-        // GET: Expenses/Delete/5
+
+        // GET: Incomes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Expense == null)
+            if (id == null || _context.Income == null)
             {
                 return NotFound();
             }
 
-            var expense = await _context.Expense
-                .Include(e => e.SubCategory)
-                .ThenInclude (sc => sc.Category)
+            var income = await _context.Income
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (expense == null)
+            if (income == null)
             {
                 return NotFound();
             }
 
-            var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
-            if (!result.Succeeded)
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
-            }
-            ViewBag.Category = expense.SubCategory.Category.Name;
-            return View(expense);
+            return View(income);
         }
 
-        // POST: Expenses/Delete/5
+        // POST: Incomes/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Expense == null)
+            if (_context.Income == null)
             {
-                return Problem("Entity set 'ApplicationDBContext.Expense'  is null.");
+                return Problem("Entity set 'ApplicationDBContext.Income'  is null.");
             }
-            var expense = await _context.Expense.FindAsync(id);
-            if (expense != null)
+            var income = await _context.Income.FindAsync(id);
+            if (income != null)
             {
-                _context.Expense.Remove(expense);
+                _context.Income.Remove(income);
             }
-            var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
-            if (!result.Succeeded)
-            {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
-            }
-
+            
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ExpenseExists(int id)
+        private bool IncomeExists(int id)
         {
-          return _context.Expense.Any(e => e.Id == id);
+          return _context.Income.Any(e => e.Id == id);
         }
         private string getUserId()
         {
