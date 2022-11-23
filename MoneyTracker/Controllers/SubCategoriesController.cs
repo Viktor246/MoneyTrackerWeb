@@ -61,7 +61,7 @@ namespace MoneyTracker.Controllers
             }
 
             ViewBag.CategoryId = categoryId;
-            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s => s.CategoryId == categoryId && s.OwnerId == this.getUserId());
+            var applicationDBContext = _context.SubCategory.Include(s => s.Category).Where(s => s.CategoryId == categoryId && s.OwnerId == this.GetUserId());
 
             ViewBag.DisplayOrderSortParam = String.IsNullOrEmpty(sortOrder) ? "display_order_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
@@ -69,34 +69,17 @@ namespace MoneyTracker.Controllers
             ViewBag.CategorySortParam = sortOrder == "category" ? "category_desc" : "category";
 
 
-            switch (sortOrder)
+            applicationDBContext = sortOrder switch
             {
-                case "display_order_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.DisplayOrder);
-                    break;
-                case "desc_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
-                    break;
-                case "desc":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Description);
-                    break;
-                case "name_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Name);
-                    break;
-                case "name":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Name);
-                    break;
-                case "category_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.CategoryId);
-                    break;
-                case "category":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.CategoryId);
-                    break;
-                default:
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.DisplayOrder);
-                    break;
-            }
-
+                "display_order_desc" => applicationDBContext.OrderByDescending(s => s.DisplayOrder),
+                "desc_desc" => applicationDBContext.OrderByDescending(s => s.Description),
+                "desc" => applicationDBContext.OrderBy(s => s.Description),
+                "name_desc" => applicationDBContext.OrderByDescending(s => s.Name),
+                "name" => applicationDBContext.OrderBy(s => s.Name),
+                "category_desc" => applicationDBContext.OrderByDescending(s => s.CategoryId),
+                "category" => applicationDBContext.OrderBy(s => s.CategoryId),
+                _ => applicationDBContext.OrderBy(s => s.DisplayOrder),
+            };
             int countOfItems = applicationDBContext.Count();
             int pageCount = countOfItems / pageSize;
             if (countOfItems % pageSize > 0)
@@ -181,14 +164,19 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("SubCategoryId,Name,Description,DisplayOrder,CategoryId,RecordStatus,RecordStatusDate")] SubCategory subCategory)
         {
-            var userId = this.getUserId();
-            subCategory.Category = await _context.Categories.FirstOrDefaultAsync(p => p.Id == subCategory.CategoryId && p.OwnerId == userId);
-            subCategory.OwnerId = userId;
+            var userId = this.GetUserId();
+            Category? category = await _context.Categories.FirstOrDefaultAsync(predicate: p => p.Id == subCategory.CategoryId && p.OwnerId == userId);
+            if (category == null)
+            {
+                return NotFound();
+            }
+            subCategory.Category = category;
             if (subCategory.Category == null)
             {
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
 
             }
+            subCategory.OwnerId = userId;
             ModelState.Remove("Category");
             ModelState.Remove("Expenses");
             if (ModelState.IsValid)
@@ -256,7 +244,7 @@ namespace MoneyTracker.Controllers
                 ModelState.AddModelError("CategoryIsNull", "Selected category doesn't exist in database!");
 
             }
-            subCategory.OwnerId = this.getUserId();
+            subCategory.OwnerId = this.GetUserId();
 
             ModelState.Remove("Category");
             ModelState.Remove("Expenses");
@@ -348,7 +336,7 @@ namespace MoneyTracker.Controllers
         {
           return _context.SubCategory.Any(e => e.SubCategoryId == id);
         }
-        private string getUserId()
+        private string GetUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;

@@ -31,34 +31,21 @@ namespace MoneyTracker.Controllers
             {
                 page = 1;
             }
-            var objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.getUserId());
+            var objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.GetUserId());
             
             ViewBag.DisplayOrderSortParam = String.IsNullOrEmpty(sortOrder) ? "display_order_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
             ViewBag.NameSortParam = sortOrder == "name" ? "name_desc" : "name";
-            
-            switch (sortOrder)
-            {
-                case "display_order_desc":
-                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.DisplayOrder);
-                    break;
-                case "desc_desc":
-                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.Description);
-                    break;
-                case "desc":
-                    objectCategoryList = objectCategoryList.OrderBy(s => s.Description);
-                    break;
-                case "name_desc":
-                    objectCategoryList = objectCategoryList.OrderByDescending(s => s.Name);
-                    break;
-                case "name":
-                    objectCategoryList = objectCategoryList.OrderBy(s => s.Name);
-                    break;
-                default:
-                    objectCategoryList = objectCategoryList.OrderBy(s => s.DisplayOrder);
-                    break;
-            }
 
+            objectCategoryList = sortOrder switch
+            {
+                "display_order_desc" => objectCategoryList.OrderByDescending(s => s.DisplayOrder),
+                "desc_desc" => objectCategoryList.OrderByDescending(s => s.Description),
+                "desc" => objectCategoryList.OrderBy(s => s.Description),
+                "name_desc" => objectCategoryList.OrderByDescending(s => s.Name),
+                "name" => objectCategoryList.OrderBy(s => s.Name),
+                _ => objectCategoryList.OrderBy(s => s.DisplayOrder),
+            };
             int countOfItems = objectCategoryList.Count();
             int pageCount = countOfItems / pageSize;
             if (countOfItems % pageSize > 0)
@@ -108,16 +95,15 @@ namespace MoneyTracker.Controllers
             }
 
             var result = await _authorizationService.AuthorizeAsync(User, categoryFromDb, "isOwner");
+            if (User.Identity == null)
+            {
+                return LocalRedirect("/Identity/Account/Login");
+            }
+
+
             if (!result.Succeeded)
             {
-                if (User.Identity.IsAuthenticated)
-                {
-                    return new ForbidResult();
-                }
-                else
-                {
-                    return new ChallengeResult();
-                }
+                return User.Identity.IsAuthenticated ? new ForbidResult() : new ChallengeResult();
             }
             return View(categoryFromDb);
         }
@@ -130,7 +116,7 @@ namespace MoneyTracker.Controllers
             {
                 ModelState.AddModelError("NameDisOrderMatch", "The Dispaly Order can not exactly match the Name of category.");
             }
-            obj.OwnerId = this.getUserId();
+            obj.OwnerId = this.GetUserId();
             ModelState.Remove("SubCategories");
             ModelState.Remove("Expenses");
             if (ModelState.IsValid)
@@ -145,7 +131,7 @@ namespace MoneyTracker.Controllers
                 }
                 catch (Exception e)
                 {
-                    ModelState.AddModelError("DBError", e.InnerException.Message);
+                    ModelState.AddModelError("DBError", errorMessage: e.InnerException.Message);
                     return View(obj);
                 }
                 TempData["success"] = "Category edited successfully!";
@@ -163,7 +149,7 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Category obj)
         {
-            obj.OwnerId = this.getUserId();
+            obj.OwnerId = this.GetUserId();
             if (obj.Name == obj.DisplayOrder.ToString())
             {
                 ModelState.AddModelError("NameDisOrderMatch", "The Dispaly Order can not exactly match the Name of category.");
@@ -251,7 +237,7 @@ namespace MoneyTracker.Controllers
             return RedirectToAction("Index");
         }
 
-        private string getUserId()
+        private string GetUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;

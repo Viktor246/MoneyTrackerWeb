@@ -34,8 +34,8 @@ namespace MoneyTracker.Controllers
             ViewBag.CurrentFilters = Filters;
             ViewBag.CurrentSearchString = searchString;
 
-            var user = await _userContext.Users.FindAsync(this.getUserId());
-            var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.getUserId());
+            var user = await _userContext.Users.FindAsync(this.GetUserId());
+            var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.GetUserId());
 
             if (cycle == 0 || cycle > DateTime.Now.Month)
             {
@@ -116,35 +116,18 @@ namespace MoneyTracker.Controllers
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
             ViewBag.ValueSortParam = sortOrder == "value" ? "value_desc" : "value";
             ViewBag.SubCatSortParam = sortOrder == "subcat" ? "subcat_desc" : "subcat";
-           
-            switch (sortOrder)
-            {
-                case "date_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.DateOfExpense);
-                    break;
-                case "desc_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
-                    break;
-                case "desc":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Description);
-                    break;
-                case "value_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Value);
-                    break;
-                case "value":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Value);
-                    break;
-                case "subcat_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.SubCategoryId);
-                    break;
-                case "subcat":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.SubCategoryId);
-                    break;
-                default:
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.DateOfExpense);
-                    break;
-            }
 
+            applicationDBContext = sortOrder switch
+            {
+                "date_desc" => applicationDBContext.OrderByDescending(s => s.DateOfExpense),
+                "desc_desc" => applicationDBContext.OrderByDescending(s => s.Description),
+                "desc" => applicationDBContext.OrderBy(s => s.Description),
+                "value_desc" => applicationDBContext.OrderByDescending(s => s.Value),
+                "value" => applicationDBContext.OrderBy(s => s.Value),
+                "subcat_desc" => applicationDBContext.OrderByDescending(s => s.SubCategoryId),
+                "subcat" => applicationDBContext.OrderBy(s => s.SubCategoryId),
+                _ => applicationDBContext.OrderBy(s => s.DateOfExpense),
+            };
             if (pageSize <= 0)
             {
                 pageSize = 10;
@@ -209,7 +192,7 @@ namespace MoneyTracker.Controllers
         // GET: Expenses/Create
         public IActionResult Create()
         {
-            var userId = this.getUserId();
+            var userId = this.GetUserId();
             var subcategories = _context.SubCategory.Where(c => c.OwnerId == userId);
             var categories = _context.Categories.Where(c => c.OwnerId == userId).OrderBy(c => c.DisplayOrder);
             ViewData["categories"] = new SelectList(categories, "Id", "Name");
@@ -221,7 +204,7 @@ namespace MoneyTracker.Controllers
         public IActionResult GetSubCategories(int categoryId)
         {
 
-            var subCategories = _context.SubCategory.Where(c => c.CategoryId == categoryId && c.OwnerId == this.getUserId()).OrderBy(c => c.DisplayOrder);
+            var subCategories = _context.SubCategory.Where(c => c.CategoryId == categoryId && c.OwnerId == this.GetUserId()).OrderBy(c => c.DisplayOrder);
 
             return new JsonResult(subCategories);
         }
@@ -234,8 +217,14 @@ namespace MoneyTracker.Controllers
         public async Task<IActionResult> Create([Bind("Id,Description,Value,DateOfExpense,SubCategoryId,RecordStatus,RecordStatusDate")] Expense expense)
         {
 
-            var userId = this.getUserId();
-            expense.SubCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
+            var userId = this.GetUserId();
+            if (userId == null)
+            {
+                return LocalRedirect("/Identity/Account/Login");
+            }
+
+            SubCategory? subCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
+            expense.SubCategory = subCategory;
             expense.OwnerId = userId;
             if (expense.SubCategory == null)
             {
@@ -265,12 +254,15 @@ namespace MoneyTracker.Controllers
             }
 
             var expense = await _context.Expense.FindAsync(id);
-            _context.Entry(expense).Reference(e => e.SubCategory).Load();
-            _context.Entry(expense.SubCategory).Reference(e => e.Category).Load();
             if (expense == null)
             {
                 return NotFound();
             }
+
+            _context.Entry(expense)
+                .Reference(e => e.SubCategory)
+                .Load();
+            _context.Entry(expense.SubCategory).Reference(e => e.Category).Load();
 
             var result = await _authorizationService.AuthorizeAsync(User, expense, "isOwner");
             if (!result.Succeeded)
@@ -399,7 +391,7 @@ namespace MoneyTracker.Controllers
         {
           return _context.Expense.Any(e => e.Id == id);
         }
-        private string getUserId()
+        private string GetUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;

@@ -34,8 +34,12 @@ namespace MoneyTracker.Controllers
             ViewBag.CurrentFilters = Filters;
             ViewBag.CurrentSearchString = searchString;
 
-            var user = await _userContext.Users.FindAsync(this.getUserId());
-            var applicationDBContext = _context.Income.Where(e => e.OwnerId == this.getUserId());
+            var user = await _userContext.Users.FindAsync(this.GetUserId());
+            if (user == null)
+            {
+                return NotFound();
+            }
+            var applicationDBContext = _context.Income.Where(e => e.OwnerId == this.GetUserId());
 
             if (cycle == 0 || cycle > DateTime.Now.Month)
             {
@@ -46,7 +50,7 @@ namespace MoneyTracker.Controllers
                 year = DateTime.Now.Year;
             }
 
-            DateTime minDate = new DateTime(year, cycle, user.DayOfCycleReset);
+            DateTime minDate = new(year, cycle, user.DayOfCycleReset);
 
             ViewBag.Month = cycle;
 
@@ -59,11 +63,15 @@ namespace MoneyTracker.Controllers
             {
                 cycle++;
             }
-            DateTime maxDate = new DateTime(year, cycle, user.DayOfCycleReset);
+            DateTime maxDate = new(year, cycle, user.DayOfCycleReset);
 
             var minYearIncome = applicationDBContext.OrderBy(e => e.Date).FirstOrDefault();
+            if(minYearIncome == null)
+            {
+                return NotFound();
+            }
 
-            List<SelectListItem> years = new List<SelectListItem>();
+            List<SelectListItem> years = new();
             for (int i = minYearIncome.Date.Year; i <= DateTime.Now.Year; i++)
             {
                 if (i == year)
@@ -86,7 +94,7 @@ namespace MoneyTracker.Controllers
                     switch (Filters)
                     {
                         case "Description":
-                            applicationDBContext = applicationDBContext.Where(s => s.Description.Contains(searchString));
+                            applicationDBContext = applicationDBContext.Where(predicate: s => s.Description.Contains(searchString));
                             break;
                         case "Value":
                             float number;
@@ -105,38 +113,27 @@ namespace MoneyTracker.Controllers
                 }
             }
 
-            List<SelectListItem> filters = new List<SelectListItem>();
-            filters.Add(new SelectListItem { Text = "--Select option--", Value = "" });
-            filters.Add(new SelectListItem { Text = "Description", Value = "Description" });
-            filters.Add(new SelectListItem { Text = "Value", Value = "Value" });
-            filters.Add(new SelectListItem { Text = "Date", Value = "Date" });
+            List<SelectListItem> filters = new()
+            {
+                new SelectListItem { Text = "--Select option--", Value = "" },
+                new SelectListItem { Text = "Description", Value = "Description" },
+                new SelectListItem { Text = "Value", Value = "Value" },
+                new SelectListItem { Text = "Date", Value = "Date" }
+            };
             ViewBag.Filters = filters;
             ViewBag.DateSortParam = String.IsNullOrEmpty(sortOrder) ? "date_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";
             ViewBag.ValueSortParam = sortOrder == "value" ? "value_desc" : "value";
 
-            switch (sortOrder)
+            applicationDBContext = sortOrder switch
             {
-                case "date_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Date);
-                    break;
-                case "desc_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Description);
-                    break;
-                case "desc":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Description);
-                    break;
-                case "value_desc":
-                    applicationDBContext = applicationDBContext.OrderByDescending(s => s.Value);
-                    break;
-                case "value":
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Value);
-                    break;
-                default:
-                    applicationDBContext = applicationDBContext.OrderBy(s => s.Date);
-                    break;
-            }
-
+                "date_desc" => applicationDBContext.OrderByDescending(s => s.Date),
+                "desc_desc" => applicationDBContext.OrderByDescending(s => s.Description),
+                "desc" => applicationDBContext.OrderBy(s => s.Description),
+                "value_desc" => applicationDBContext.OrderByDescending(s => s.Value),
+                "value" => applicationDBContext.OrderBy(s => s.Value),
+                _ => applicationDBContext.OrderBy(s => s.Date),
+            };
             if (pageSize <= 0)
             {
                 pageSize = 10;
@@ -311,7 +308,7 @@ namespace MoneyTracker.Controllers
         {
           return _context.Income.Any(e => e.Id == id);
         }
-        private string getUserId()
+        private string GetUserId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             return userId;
