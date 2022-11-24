@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MoneyTracker.Data;
 
@@ -11,9 +12,11 @@ using MoneyTracker.Data;
 namespace MoneyTracker.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20221124121146_DailyMonthlyYearlyUserIncomeExpensesSchema")]
+    partial class DailyMonthlyYearlyUserIncomeExpensesSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,7 +60,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "CATEGOR_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.Expense", b =>
@@ -94,7 +97,7 @@ namespace MoneyTracker.Migrations
 
                     b.HasIndex("SubCategoryId");
 
-                    b.ToTable("Expense", (string)null);
+                    b.ToTable("Expense");
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.Income", b =>
@@ -126,7 +129,7 @@ namespace MoneyTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Income", (string)null);
+                    b.ToTable("Income");
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.SubCategory", b =>
@@ -169,7 +172,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "SUBCATEGORY_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("SubCategory", (string)null);
+                    b.ToTable("SubCategory");
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.Expense", b =>
