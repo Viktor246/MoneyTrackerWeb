@@ -64,12 +64,17 @@ namespace MoneyTracker.Controllers
             DateTime maxDate = new(year, cycle, user.DayOfCycleReset);
 
             var minYearExpense = applicationDBContext.OrderBy(e => e.DateOfExpense).FirstOrDefault();
+            int minYear;
             if (minYearExpense == null)
             {
-                return NotFound();
+                minYear = DateTime.Now.Year;
+            }
+            else
+            {
+                minYear = minYearExpense.DateOfExpense.Year;
             }
             List<SelectListItem> years = new();
-            for (int i = minYearExpense.DateOfExpense.Year; i <= DateTime.Now.Year; i++)
+            for (int i = minYear; i <= DateTime.Now.Year; i++)
             {
                 if (i == year)
                 {

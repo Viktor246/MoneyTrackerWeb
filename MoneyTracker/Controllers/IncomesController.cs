@@ -66,13 +66,18 @@ namespace MoneyTracker.Controllers
             DateTime maxDate = new(year, cycle, user.DayOfCycleReset);
 
             var minYearIncome = applicationDBContext.OrderBy(e => e.Date).FirstOrDefault();
+            int minYear;
             if(minYearIncome == null)
             {
-                return NotFound();
+                minYear = DateTime.Now.Year;
+            }
+            else
+            {
+                minYear = minYearIncome.Date.Year;
             }
 
             List<SelectListItem> years = new();
-            for (int i = minYearIncome.Date.Year; i <= DateTime.Now.Year; i++)
+            for (int i = minYear; i <= DateTime.Now.Year; i++)
             {
                 if (i == year)
                 {
