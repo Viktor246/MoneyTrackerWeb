@@ -1,0 +1,268 @@
+﻿@using System.Web;
+@model MoneyTracker.Models.UserDashboard
+@{
+    ViewData["Title"] = "Index";
+    var x = 0;
+}
+
+<div class="container p">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Dashboard</h2>
+        </div>
+        <div class="col-6 text-end">
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row pt-4">
+        <div class="col-6">
+            <table class="table table-bordered table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>
+                            Description
+                        </th>
+                        <th>
+                            Value
+                        </th>
+                        <th>
+                            Date of expense
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.RecentExpenses)
+                    {
+                        <tr>
+                            <td width="40%">
+                                @Html.DisplayFor(modelItem => item.Description)
+                            </td>
+                            <td width="20%">
+                                @Html.DisplayFor(modelItem => item.Value)
+                            </td>
+                            <td width="40%">
+                                @Html.DisplayFor(modelItem => item.DateOfExpense)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-6">
+            <div class="card" style="background-color: #0D3640">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="row pt-4">
+        <div class="col-6">
+            <table class="table table-bordered table-striped table-sm" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>
+                            Month
+                        </th>
+                        <th>
+                            Income
+                        </th>
+                        <th>
+                            Expense
+                        </th>
+                        <th>
+                            Total
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.MonthlyUserData)
+                    {
+                        if (item.Date.Month == ViewBag.RecentMonths[x])
+                        {
+
+                            <tr>
+                                <td width="10%">
+                                    @Html.DisplayFor(modelItem => item.Date.Month)
+                                </td>
+                                <td width="20%">
+                                    @Html.DisplayFor(modelItem => item.MonthlyIncome)
+                                </td>
+                                <td width="20%">
+                                    @Html.DisplayFor(modelItem => item.MonthlyExpense)
+                                </td>
+                                <td width="20%">
+                                    @ViewBag.RecentMonthsTotal[x]
+                                </td>
+                            </tr>
+                        }
+                        x++;
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-6">
+            <div class="card" style="background-color: #0D3640">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="row pt-4">
+        @foreach (var item in Model.YearlyUserData)
+        {
+            <div class="col-1">
+                This year:
+            </div>
+            <div class="col-2">
+                Income:
+                @Html.DisplayFor(modelItem => item.YearlyIncome)
+            </div>
+            <div class="col-2">
+                Expense:
+                @Html.DisplayFor(modelItem => item.YearlyExpense)
+            </div>
+            <div class="col-2">
+                Total:
+                @ViewBag.YearlyTotal
+            </div>
+        }
+    </div>    
+</div>
+@section Scripts {
+<script>
+  google.charts.load('current', {packages: ['corechart']});
+  google.charts.setOnLoadCallback(drawDailyChart);
+        function drawDailyChart() {
+
+            var jsonStringDaily = "@ViewBag.DailyUserDataJson";
+            var formatedJsonStringDaily = jsonStringDaily.replaceAll("&amp;", "").replaceAll("&quot;", "\"").replaceAll(",", ", ");
+
+            var parsedJsonDaily = [];
+            parsedJsonDaily = JSON.parse(formatedJsonStringDaily);
+
+            let labelsArrayDaily = [];
+            let datasetDataArrayDaily = [];
+            for (var i = 0; i < parsedJsonDaily.length; i++) {
+                var dailyExpense = parsedJsonDaily[i];
+                var date = new Date(dailyExpense.Date);
+                var day = date.getDate();
+                var month = date.getMonth() + 1;
+                var string = "" + day + "." + month + ".";
+                labelsArrayDaily.push(string);
+                datasetDataArrayDaily.push(dailyExpense.DailyExpense);
+            }
+            const ctx = document.getElementById("dailyChart").getContext('2d');
+            Chart.defaults.color = '#000';
+            const dailyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labelsArrayDaily,
+                    datasets: [{
+                        label: 'Daily expenses',
+                        backgroundColor: '#839496',
+                        borderColor: '#839496',
+                        data: datasetDataArrayDaily,
+                    }]
+                },
+                options: {
+                    legend: {
+                          labels: {
+                             fontColor: 'white'
+                          }
+                       },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                fontColor: "#fff"
+
+                            },
+                            gridLines: {
+                                    color: "#839496"
+                            }
+                        }],
+                        xAxes: [{
+                            gridLines: {
+                                display: false ,
+                                color: "#839496"
+                            },
+                            ticks: {
+                                fontColor: "#fff"
+                            }
+                        }]
+                    }
+                }
+            });
+
+
+
+            var jsonStringMonthly = "@ViewBag.MonthlyUserDataJson";
+            var formatedJsonStringMonthly = jsonStringMonthly.replaceAll("&amp;", "").replaceAll("&quot;", "\"").replaceAll(",", ", ");
+            var parsedJsonMonthly = [];
+            parsedJsonMonthly = JSON.parse(formatedJsonStringMonthly);
+
+            let labelsArrayMonthly = [];
+            let datasetDataArrayIncomeMonthly = [];
+            let datasetDataArrayExpenseMonthly = [];
+            for (var i = parsedJsonMonthly.length - 1; i >= 0; i--) {
+                var monthlyExpense = parsedJsonMonthly[i];
+                var date = new Date(monthlyExpense.Date);
+                var month = date.getMonth() + 1;
+                var year = date.getYear() - 100;
+                console.log(month);
+                console.log(year);
+                console.log(date);
+                var string = "" + month + "." + year + ".";
+                labelsArrayMonthly.push(string);
+                datasetDataArrayExpenseMonthly.push(monthlyExpense.MonthlyExpense);
+                datasetDataArrayIncomeMonthly.push(monthlyExpense.MonthlyIncome);
+            }
+            const ctx2 = document.getElementById("monthlyChart").getContext('2d');
+            const monthlyChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: labelsArrayMonthly,
+                    datasets: [{
+                        label: 'Monthly expenses',
+                        backgroundColor: '#839496',
+                        borderColor: '#839496',
+                        data: datasetDataArrayExpenseMonthly,
+                    }, {
+                        label: 'Monthly income',
+                        backgroundColor: '#ff0000',
+                        borderColor: '#ff0000',
+                        data: datasetDataArrayIncomeMonthly,
+                    }]
+                },
+                options: {
+                    legend: {
+                        labels: {
+                            fontColor: 'white'
+                        }
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                fontColor: "#fff"
+
+                            },
+                            gridLines: {
+                                color: "#839496"
+                            }
+                        }],
+                        xAxes: [{
+                            gridLines: {
+                                display: false,
+                                color: "#839496"
+                            },
+                            ticks: {
+                                fontColor: "#fff"
+                            }
+                        }]
+                    }
+                }
+            });
+
+        }
+</script>
+}

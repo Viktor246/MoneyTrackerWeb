@@ -35,5 +35,9 @@ namespace MoneyTracker.Utility
 
             return pages;
         }
+        public static int GetLastDayOfMonth(DateTime date) 
+        { 
+            return DateTime.DaysInMonth(date.Year, date.Month); 
+        }
     }
 }
