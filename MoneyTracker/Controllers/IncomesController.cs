@@ -214,6 +214,12 @@ namespace MoneyTracker.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Description,Value,Date,OwnerId,RecordStatus,RecordStatusDate")] Income income)
         {
+            var userId = this.GetUserId();
+            if (userId == null)
+            {
+                return LocalRedirect("/Identity/Account/Login");
+            }
+            income.OwnerId = userId;
             if (ModelState.IsValid)
             {
                 _context.Add(income);
@@ -250,6 +256,13 @@ namespace MoneyTracker.Controllers
             {
                 return NotFound();
             }
+
+            var userId = this.GetUserId();
+            if (userId == null)
+            {
+                return LocalRedirect("/Identity/Account/Login");
+            }
+            income.OwnerId = userId;
 
             if (ModelState.IsValid)
             {

@@ -1,74 +1,107 @@
 ﻿@model IEnumerable<MoneyTracker.Models.SubCategory>
 @{
     ViewData["Title"] = "Index";
+    ViewData["PaginationAction"] = "Index";
+    ViewData["PaginationController"] = "SubCategory";
+    ViewData["PaginationPageSize"] = ViewBag.PageSize;
 }
 
 <div class="container p-3">
-    <div class="row pt-4">
-        <div class="col-3">
+    <div class="row d-none d-lg-flex" pt-4>
+            <div class="col">
+                <h2 class="text-primary">Sub Category List</h2>
+            </div>
+            <div class="col">
+                <a asp-controller="Category" asp-action="index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-return-left"></i> &nbsp; Retrun
+                </a>
+            </div>
+            <div class="col text-end">
+                <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> &nbsp; Create New Sub Category
+                </a>
+            </div>
+    </div>
+    <div class="row d-block d-lg-none pt-4">
+        <div class="col-8 col-sm-7 col-md-6">
+            <div class="pt-2">
             <h2 class="text-primary">Sub Category List</h2>
-        </div>
-        <div class="col-3">
+            </div>
+            <div class="pt-2">
             <a asp-controller="Category" asp-action="index" class="btn btn-secondary">
                 <i class="bi bi-arrow-return-left"></i> &nbsp; Retrun
             </a>
-        </div>
-        <div class="col-6 text-end">
+            </div>
+            <div class="pt-2">
             <a asp-action="Create" asp-route-categoryId="@ViewBag.CategoryId" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> &nbsp; Create New Sub Category
             </a>
+            </div>
         </div>
     </div>
-</div>
-
-<table class="table table-bordered table-striped" style="width:100%">
-    <thead>
-        <tr>
-            <th>
-                @Html.ActionLink(Html.DisplayNameFor(model => model.Name), "Index", new { sortOrder = ViewBag.NameSortParam, categoryId = ViewBag.CategoryId })
-            </th>
-            <th>
-                @Html.ActionLink(Html.DisplayNameFor(model => model.Description), "Index", new { sortOrder = ViewBag.DescriptionSortParam, categoryId = ViewBag.CategoryId })
-            </th>
-            <th>
-                @Html.ActionLink(Html.DisplayNameFor(model => model.DisplayOrder), "Index", new { sortOrder = ViewBag.DisplayOrderSortParam, categoryId = ViewBag.CategoryId })
-            </th>
-            <th>
-                @Html.ActionLink(Html.DisplayNameFor(model => model.Category), "Index", new { sortOrder = ViewBag.CategorySortParam, categoryId = ViewBag.CategoryId })
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model) {
-            <tr>
-                <td width="20%">
-                @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td width="40%">
-                @Html.DisplayFor(modelItem => item.Description)
-                </td>
-                <td width="10%">
-                @Html.DisplayFor(modelItem => item.DisplayOrder)
-                </td>
-                <td width="10%">
-                @Html.DisplayFor(modelItem => item.Category.Name)
-                </td>
-                <td>
-                    <div class="btn-group w-80" role="group">
-                        <a asp-action="Edit" asp-route-id="@item.SubCategoryId" class="btn btn-primary mx-2"><i class="bi bi-pencil-square"></i> Edit</a>
-                    </div>
-                    <div class="btn-group w-80" role="group">
-                        <a asp-action="Delete" asp-route-id="@item.SubCategoryId" class="btn btn-danger mx-2"><i class="bi bi-trash-fill"></i> Delete</a>
-                    </div>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
-<div class="container pb-1">
+    <div class="row pt-4">
+        <table class="table table-bordered table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.ActionLink(Html.DisplayNameFor(model => model.Name), "Index", new { sortOrder = ViewBag.NameSortParam, categoryId = ViewBag.CategoryId })
+                    </th>
+                    <th>
+                        @Html.ActionLink(Html.DisplayNameFor(model => model.Description), "Index", new { sortOrder = ViewBag.DescriptionSortParam, categoryId = ViewBag.CategoryId })
+                    </th>
+                    <th>
+                        @Html.ActionLink(Html.DisplayNameFor(model => model.DisplayOrder), "Index", new { sortOrder = ViewBag.DisplayOrderSortParam, categoryId = ViewBag.CategoryId })
+                    </th>
+                    <th>
+                        @Html.ActionLink(Html.DisplayNameFor(model => model.Category), "Index", new { sortOrder = ViewBag.CategorySortParam, categoryId = ViewBag.CategoryId })
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td width="20%">
+                            @Html.DisplayFor(modelItem => item.Name)
+                        </td>
+                        <td width="40%">
+                            @Html.DisplayFor(modelItem => item.Description)
+                        </td>
+                        <td width="10%">
+                            @Html.DisplayFor(modelItem => item.DisplayOrder)
+                        </td>
+                        <td width="10%">
+                            @Html.DisplayFor(modelItem => item.Category.Name)
+                        </td>
+                        <td class="justify-content-end">
+                            <div class="d-none d-xl-block text-end">
+                                <div class="btn-group" style="width:100px" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.SubCategoryId" class="btn btn-primary mx-1"><i class="bi bi-pencil-square"></i> Edit</a>
+                                </div>
+                                <div class="btn-group" style="width:100px" role="group">
+                                    <a asp-action="Delete" asp-route-id="@item.SubCategoryId" class="btn btn-danger mx-1"><i class="bi bi-trash-fill"></i> Delete</a>
+                                </div>
+                            </div>
+                            <div class="d-xl-none text-end">
+                                <ul class="nav nav-pills text-end">
+                                    <li class="nav-item dropdown text-end">
+                                        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
+                                        <div class="dropdown-menu" style="">
+                                            <a asp-action="Edit" asp-route-id="@item.SubCategoryId" class="btn btn-primary mx-1" style="width:100px"><i class="bi bi-pencil-square"></i> Edit</a>
+                                            <a asp-action="Delete" asp-route-id="@item.SubCategoryId" class="btn btn-danger mx-1" style="width:100px"><i class="bi bi-trash-fill"></i> Delete</a>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
     <div class="row">
-        <div class="col-9">
+        <div class="col-6">
             <ul class="pagination">
                 <li class="page-item @ViewBag.FirstPage">
                     <a class="page-link" asp-action="Index" asp-route-categoryId="@ViewBag.CategoryId" asp-route-page="1" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-pageSize="@ViewBag.PageSize">&laquo;</a>
@@ -93,21 +126,8 @@
                 </li>
             </ul>
         </div>
-        <div class="col-3">
-            @using (Html.BeginForm("Index", "SubCategories", FormMethod.Get))
-            {
-                <div class="row">
-                    <div class="col-7 text-end align-self-lg-center">
-                        <label class="control-label">Page size</label>
-                    </div>
-                    <div class="col-5">
-                        <div class="input-group">
-                            <input type="text" class="form-control" value="@ViewBag.PageSize" name="pageSize">
-                            <button class="btn btn-primary" type="submit">+</button>
-                        </div>
-                    </div>
-                </div>
-            }
+        <div class="col-6">
+            @await Html.PartialAsync("_PaginationPageSize", ViewData)
         </div>
     </div>
 </div>

@@ -1,0 +1,13 @@
+﻿<form asp-controller="@ViewData["PaginationController"]" asp-action="@ViewData["PaginationAction"]" method="get">
+    <div class="row justify-content-end">
+        <div class="col-auto text-end align-self-lg-center">
+            <label class="control-label">Page size:</label>
+        </div>
+        <div class="col-auto">
+            <div class="input-group">
+                <input type="text" style="width:45px;" class="form-control" value="@ViewData["PaginationPageSize"]" name="pageSize">
+                <button class="btn btn-primary" type="submit">+</button>
+            </div>
+        </div>
+    </div>
+</form>
