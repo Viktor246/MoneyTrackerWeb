@@ -109,6 +109,7 @@ namespace MoneyTracker.Controllers
             ViewBag.RecentMonthsTotal = recentMonthsTotal;
             ViewBag.MonthlyUserDataJson = jsonStringMonthly;
             ViewBag.YearlyTotal =userDashboard.YearlyUserData[0].YearlyIncome - userDashboard.YearlyUserData[0].YearlyExpense;
+            ViewBag.DayOfCycleReset = dayOfCycleReset;
             return View(userDashboard);
         }
         private string GetUserId()

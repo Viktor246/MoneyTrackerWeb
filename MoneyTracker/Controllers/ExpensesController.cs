@@ -41,7 +41,7 @@ namespace MoneyTracker.Controllers
             }
             var applicationDBContext = _context.Expense.Include(e => e.SubCategory).Where(e => e.OwnerId == this.GetUserId());
 
-            if (cycle == 0 || cycle > DateTime.Now.Month)
+            if (cycle == 0 || cycle > 12)
             {
                 cycle = DateTime.Now.Month;
             }
@@ -73,8 +73,20 @@ namespace MoneyTracker.Controllers
             {
                 minYear = minYearExpense.DateOfExpense.Year;
             }
+
+            var maxYearExpense = applicationDBContext.OrderByDescending(e => e.DateOfExpense).FirstOrDefault();
+            int maxYear;
+            if (maxYearExpense == null)
+            {
+                maxYear = DateTime.Now.Year;
+            }
+            else
+            {
+                maxYear = maxYearExpense.DateOfExpense.Year;
+            }
+
             List<SelectListItem> years = new();
-            for (int i = minYear; i <= DateTime.Now.Year; i++)
+            for (int i = minYear; i <= maxYear; i++)
             {
                 if (i == year)
                 {
@@ -242,13 +254,6 @@ namespace MoneyTracker.Controllers
             var categories = _context.Categories.Where(c => c.OwnerId == userId);
 
             SubCategory? subCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
-            if (subCategory == null)
-            {
-                ModelState.AddModelError("SelectSubCategory", "Please select sub category!");
-                ViewData["categories"] = new SelectList(categories, "Id", "Name");
-                ViewBag.Now = DateTime.Now;
-                return View(expense);
-            }
             expense.SubCategory = subCategory;
             expense.OwnerId = userId;
             if (expense.SubCategory == null)

@@ -41,7 +41,7 @@ namespace MoneyTracker.Controllers
             }
             var applicationDBContext = _context.Income.Where(e => e.OwnerId == this.GetUserId());
 
-            if (cycle == 0 || cycle > DateTime.Now.Month)
+            if (cycle == 0 || cycle > 12)
             {
                 cycle = DateTime.Now.Month;
             }
@@ -76,8 +76,19 @@ namespace MoneyTracker.Controllers
                 minYear = minYearIncome.Date.Year;
             }
 
+            var maxYearIncome = applicationDBContext.OrderByDescending(e => e.Date).FirstOrDefault();
+            int maxYear;
+            if (maxYearIncome == null)
+            {
+                maxYear = DateTime.Now.Year;
+            }
+            else
+            {
+                maxYear = maxYearIncome.Date.Year;
+            }
+
             List<SelectListItem> years = new();
-            for (int i = minYear; i <= DateTime.Now.Year; i++)
+            for (int i = minYear; i <= maxYear; i++)
             {
                 if (i == year)
                 {
