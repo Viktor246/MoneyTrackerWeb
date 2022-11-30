@@ -29,16 +29,14 @@
                         <li class="nav-item">
                             @if (SignInManager.IsSignedIn(User))
                             {
-                                <a class="nav-link active" asp-area="" asp-controller="UserDashboard" asp-action="Index">
+                                <a class="nav-link" asp-area="" asp-controller="UserDashboard" asp-action="Index">
                                 Home
-                                <span class="visually-hidden">(current)</span>
                                 </a>
                             }
                             else
                             {
-                                <a class="nav-link active" asp-area="" asp-controller="Home" asp-action="Index">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
                                 Home
-                                <span class="visually-hidden">(current)</span>
                                 </a>
                             }
                         </li>

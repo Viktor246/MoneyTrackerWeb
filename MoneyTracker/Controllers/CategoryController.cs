@@ -31,7 +31,7 @@ namespace MoneyTracker.Controllers
             {
                 page = 1;
             }
-            var objectCategoryList = _db.Categories.Where(c => c.OwnerId == this.GetUserId());
+            var objectCategoryList = _db.Categories.Include(c => c.SubCategories).Where(c => c.OwnerId == this.GetUserId());
             
             ViewBag.DisplayOrderSortParam = String.IsNullOrEmpty(sortOrder) ? "display_order_desc" : "";
             ViewBag.DescriptionSortParam = sortOrder == "desc" ? "desc_desc" : "desc";

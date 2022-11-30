@@ -239,11 +239,15 @@ namespace MoneyTracker.Controllers
             {
                 return LocalRedirect("/Identity/Account/Login");
             }
+            var categories = _context.Categories.Where(c => c.OwnerId == userId);
 
             SubCategory? subCategory = await _context.SubCategory.FirstOrDefaultAsync(p => p.SubCategoryId == expense.SubCategoryId && p.OwnerId == userId);
             if (subCategory == null)
             {
-                return NotFound();
+                ModelState.AddModelError("SelectSubCategory", "Please select sub category!");
+                ViewData["categories"] = new SelectList(categories, "Id", "Name");
+                ViewBag.Now = DateTime.Now;
+                return View(expense);
             }
             expense.SubCategory = subCategory;
             expense.OwnerId = userId;
@@ -260,7 +264,6 @@ namespace MoneyTracker.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            var categories = _context.Categories.Where(c => c.OwnerId == userId);
             ViewData["categories"] = new SelectList(categories, "Id", "Name");
             ViewBag.Now = DateTime.Now;
             return View(expense);
