@@ -6,6 +6,7 @@ using MoneyTracker.Models;
 using MoneyTracker.Utility;
 using NuGet.Protocol;
 using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -76,6 +77,40 @@ namespace MoneyTracker.Controllers
                 .Where(e => e.Id == userId && e.Date.Year== DateTime.Now.Year)
                 .OrderBy(e => e.Date).ToListAsync();
 
+
+            var categoryList = await _context.Categories.Include(c => c.SubCategories).ThenInclude(sc => sc.Expenses)
+                .Where(c => c.OwnerId == userId).OrderBy(c => c.DisplayOrder).ToListAsync();
+            List<String> categoryNames = new();
+            List<String> subCategoryNames = new();
+            List<float> categoryExpenseSums = new();
+            List<float> subCategoryExpenseSums = new();
+            foreach (var category in categoryList)
+            {
+                float categorySum = 0;
+                foreach (var subCategory in category.SubCategories)
+                {
+                    float subCategorySum = 0;
+                    foreach (var expense in subCategory.Expenses)
+                    {
+                        if (expense.DateOfExpense >= minDateDaily && expense.DateOfExpense < maxDateDaily)
+                        {
+                            categorySum += expense.Value;
+                            subCategorySum += expense.Value;
+                        }
+                    }
+                    if (subCategorySum != 0)
+                    {
+                        subCategoryNames.Add(subCategory.Name);
+                        subCategoryExpenseSums.Add(subCategorySum);
+                    }
+                }
+                if (categorySum != 0)
+                {
+                    categoryNames.Add(category.Name);
+                    categoryExpenseSums.Add(categorySum);
+                }
+            }
+
             UserDashboard userDashboard = new()
             {
                 DailyUserData = dailyUserData,
@@ -86,8 +121,8 @@ namespace MoneyTracker.Controllers
 
             var jsonStringDaily = JsonSerializer.Serialize(dailyUserData);
 
-            List<int> recentMonths = new List<int>();
-            List<float> recentMonthsTotal = new List<float>();
+            List<int> recentMonths = new();
+            List<float> recentMonthsTotal = new();
             foreach (var item in monthlyUserData)
             {
                 if (item.Date.Month > DateTime.Now.Month - 5 && item.Date.Month <= DateTime.Now.Month)
@@ -110,6 +145,11 @@ namespace MoneyTracker.Controllers
             ViewBag.MonthlyUserDataJson = jsonStringMonthly;
             ViewBag.YearlyTotal =userDashboard.YearlyUserData[0].YearlyIncome - userDashboard.YearlyUserData[0].YearlyExpense;
             ViewBag.DayOfCycleReset = dayOfCycleReset;
+            ViewBag.categoryNames = categoryNames;
+            ViewBag.categoryExpenseSums = categoryExpenseSums;
+            ViewBag.SubCategoryNames = subCategoryNames;
+            ViewBag.SubCategoryExpenseSums = subCategoryExpenseSums;
+
             return View(userDashboard);
         }
         private string GetUserId()

@@ -57,7 +57,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "CATEGOR_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.DailyUserData", b =>
@@ -113,7 +113,7 @@ namespace MoneyTracker.Migrations
 
                     b.HasIndex("SubCategoryId");
 
-                    b.ToTable("Expense");
+                    b.ToTable("Expense", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.Income", b =>
@@ -145,7 +145,7 @@ namespace MoneyTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Income");
+                    b.ToTable("Income", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.MonthlyUserData", b =>
@@ -207,7 +207,7 @@ namespace MoneyTracker.Migrations
                     b.HasIndex(new[] { "Name" }, "SUBCATEGORY_UNIQUE_NAME")
                         .IsUnique();
 
-                    b.ToTable("SubCategory");
+                    b.ToTable("SubCategory", (string)null);
                 });
 
             modelBuilder.Entity("MoneyTracker.Models.YearlyUserData", b =>

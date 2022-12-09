@@ -5,6 +5,5 @@
         public List<MonthlyUserData>? MonthlyUserData { get; set; }
         public List<YearlyUserData>? YearlyUserData { get; set; }
         public List<Expense>? RecentExpenses { get; set; }
-
     }
 }
