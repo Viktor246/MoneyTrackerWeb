@@ -41,29 +41,58 @@ namespace MoneyTracker.Controllers
             }
             var applicationDBContext = _context.Income.Where(e => e.OwnerId == this.GetUserId());
 
-            if (cycle == 0 || cycle > 12)
+            if (cycle <= 0 || cycle > 12)
             {
-                cycle = DateTime.Now.Month;
+                if (DateTime.Now.Day < user.DayOfCycleReset)
+                {
+                    if (DateTime.Now.Month == 1)
+                    {
+                        cycle = 12;
+                    }
+                    else
+                    {
+                        cycle = DateTime.Now.Month - 1;
+                    }
+                }
+                else
+                {
+                    cycle = DateTime.Now.Month;
+                }
             }
             if (year == 0)
             {
-                year = DateTime.Now.Year;
+                if (DateTime.Now.Day < user.DayOfCycleReset)
+                {
+                    if (cycle == 12)
+                    {
+                        year = DateTime.Now.Year - 1;
+                    }
+                    else
+                    {
+                        year = DateTime.Now.Year;
+                    }
+                }
+                else
+                {
+                    year = DateTime.Now.Year;
+                }
             }
 
             DateTime minDate = new(year, cycle, user.DayOfCycleReset);
 
             ViewBag.Month = cycle;
 
+            DateTime maxDate;
+
             if (cycle == 12)
             {
-                cycle = 1;
-                year++;
+                maxDate = new(year + 1, 1, user.DayOfCycleReset);
+
             }
             else
             {
-                cycle++;
+                maxDate = new(year, cycle + 1, user.DayOfCycleReset);
             }
-            DateTime maxDate = new(year, cycle, user.DayOfCycleReset);
 
             var minYearIncome = applicationDBContext.OrderBy(e => e.Date).FirstOrDefault();
             int minYear;

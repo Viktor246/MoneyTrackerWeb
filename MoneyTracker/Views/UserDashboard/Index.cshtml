@@ -382,6 +382,7 @@
         for (var i = 0; i <= subCategoryNames.length; i++) {
             subCategoryCategories[i] = categoryNames[categoryPointer];
             sum += subCategoryExpenseSums[i];
+            sum = Math.round(sum * 100) / 100;
             if (sum == categoryExpenseSums[categoryPointer])
             {
                 categoryPointer++;
