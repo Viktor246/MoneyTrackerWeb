@@ -82,6 +82,7 @@ namespace MoneyTracker.Controllers
                 .Where(c => c.OwnerId == userId).OrderBy(c => c.DisplayOrder).ToListAsync();
             List<String> categoryNames = new();
             List<String> subCategoryNames = new();
+            List<String> subCategoryCategoryNames = new();
             List<float> categoryExpenseSums = new();
             List<float> subCategoryExpenseSums = new();
             foreach (var category in categoryList)
@@ -101,6 +102,7 @@ namespace MoneyTracker.Controllers
                     if (subCategorySum != 0)
                     {
                         subCategoryNames.Add(subCategory.Name);
+                        subCategoryCategoryNames.Add(category.Name);
                         subCategoryExpenseSums.Add(subCategorySum);
                     }
                 }
@@ -148,7 +150,9 @@ namespace MoneyTracker.Controllers
             ViewBag.categoryNames = categoryNames;
             ViewBag.categoryExpenseSums = categoryExpenseSums;
             ViewBag.SubCategoryNames = subCategoryNames;
+            ViewBag.SubCategoryCategoryNames = subCategoryCategoryNames;
             ViewBag.SubCategoryExpenseSums = subCategoryExpenseSums;
+
 
             return View(userDashboard);
         }

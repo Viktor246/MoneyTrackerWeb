@@ -374,21 +374,8 @@
         var categoryExpenseSums = @Html.Raw(JsonConvert.SerializeObject(ViewBag.categoryExpenseSums));
 
         var subCategoryNames = @Html.Raw(JsonConvert.SerializeObject(ViewBag.SubCategoryNames));
+        var subCategoryCategories = @Html.Raw(JsonConvert.SerializeObject(ViewBag.SubCategoryCategoryNames));
         var subCategoryExpenseSums = @Html.Raw(JsonConvert.SerializeObject(ViewBag.subCategoryExpenseSums));
-
-        var subCategoryCategories = [];
-        var sum = 0;
-        var categoryPointer = 0;
-        for (var i = 0; i <= subCategoryNames.length; i++) {
-            subCategoryCategories[i] = categoryNames[categoryPointer];
-            sum += subCategoryExpenseSums[i];
-            sum = Math.round(sum * 100) / 100;
-            if (sum == categoryExpenseSums[categoryPointer])
-            {
-                categoryPointer++;
-                sum = 0;
-            }
-        }
 
         var categoryColors = [];
         for (var i = 0; i < categoryNames.length; i++) {
@@ -435,7 +422,7 @@
                             chart.getDatasetMeta(0).data[legendItem.index].hidden = hidden;
                             let pointer = 0;
                             chart.data.datasets[0].data.forEach((v, i) => {
-                                while (v > 0) {
+                                while ((v - 0.0001) > 0) {
                                     if (i == legendItem.index) {
                                         chart.getDatasetMeta(1).data[pointer].hidden = hidden;
                                     }
