@@ -141,6 +141,28 @@ namespace MoneyTracker.Controllers
             }
             var jsonStringMonthly = JsonSerializer.Serialize(monthlyUserData);
 
+
+
+            var lastBalance = _context.Balance.OrderByDescending(x => x.Date).Where(x => x.OwnerId == userId).FirstOrDefault();
+
+            float currentBalance = 0;
+            if (lastBalance != null)
+            {
+                currentBalance = lastBalance.Value;
+                var allExpenses = _context.Expense.Where(e => e.DateOfExpense > lastBalance.Date && e.DateOfExpense < DateTime.Now && e.OwnerId == userId);
+                foreach (var expense in allExpenses)
+                {
+                    currentBalance -= expense.Value;
+                }
+                var allIncomes = _context.Income.Where(i => i.Date > lastBalance.Date && i.Date < DateTime.Now && i.OwnerId == userId);
+                foreach (var income in allIncomes)
+                {
+                    currentBalance += income.Value;
+                }
+            }
+
+            currentBalance = (float)Math.Round(currentBalance, 2);
+
             ViewBag.DailyUserDataJson = jsonStringDaily;
             ViewBag.RecentMonths = recentMonths;
             ViewBag.RecentMonthsTotal = recentMonthsTotal;
@@ -152,6 +174,7 @@ namespace MoneyTracker.Controllers
             ViewBag.SubCategoryNames = subCategoryNames;
             ViewBag.SubCategoryCategoryNames = subCategoryCategoryNames;
             ViewBag.SubCategoryExpenseSums = subCategoryExpenseSums;
+            ViewBag.CurrentBalance = currentBalance;
 
 
             return View(userDashboard);

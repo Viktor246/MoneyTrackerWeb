@@ -1,0 +1,112 @@
+﻿@model IEnumerable<MoneyTracker.Models.Balance>
+
+@{
+    ViewData["Title"] = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["PaginationAction"] = "Index";
+    ViewData["PaginationController"] = "Balances";
+    ViewData["PaginationPageSize"] = ViewBag.PageSize;
+}
+
+
+<div class="container p-3">
+    <div class="row pt-4 d-flex align-items-end">
+        <div class="col-6">
+             <div class="row pt-4">
+                <div class="col-auto">
+                    <h2 class="text-primary">Balance</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 text-end">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> &nbsp; Add current balance
+            </a>
+        </div>
+    </div>
+</div>
+<table class="table table-bordered table-striped" style="width:100%">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Value)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Date)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Description)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Value)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Date)
+                </td>
+                <td class="justify-content-end">
+                    <div class="d-none d-lg-block text-end">
+                        <div class="btn-group" style="width:100px" role="group">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary mx-1"><i class="bi bi-pencil-square"></i> Edit</a>
+                        </div>
+                        <div class="btn-group" style="width:100px" role="group">
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger mx-1"><i class="bi bi-trash-fill"></i> Delete</a>
+                        </div>
+                    </div>
+                    <div class="d-block d-lg-none text-end">
+                        <ul class="nav nav-pills text-end">
+                            <li class="nav-item dropdown text-end">
+                                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false"><i class="bi bi-three-dots-vertical"></i></a>
+                                <div class="dropdown-menu" style="">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary mx-1" style="width:100px"><i class="bi bi-pencil-square"></i> Edit</a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger mx-1" style="width:100px"><i class="bi bi-trash-fill"></i> Delete</a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div class="container pb-1">
+    <div class="row">
+        <div class="col-6">
+            <ul class="pagination">
+                <li class="page-item @ViewBag.FirstPage">
+                    <a class="page-link" asp-action="Index" asp-route-page="1" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">&laquo;</a>
+                </li>
+                @foreach (int item in ViewBag.Pages)
+                {
+                    if (item.ToString() == ViewBag.Page)
+                    {
+                        <li class="page-item active">
+                            <a class="page-link" asp-action="Index" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="Index" asp-route-page="@item" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">@item</a>
+                        </li>
+                    }
+                }
+                <li class="page-item @ViewBag.LastPage">
+                    <a class="page-link" asp-action="Index" asp-route-page="@ViewBag.PageCount" asp-route-sortOrder="@ViewBag.CurrentSortOrder" asp-route-Filters="@ViewBag.CurrentFilters" asp-route-searchString="@ViewBag.CurrentSearchString" asp-route-pageSize="@ViewBag.PageSize">&raquo;</a>
+                </li>
+            </ul>
+        </div>
+        <div class="col-6">
+            @await Html.PartialAsync("_PaginationPageSize", ViewData)
+        </div>
+    </div>
+</div>

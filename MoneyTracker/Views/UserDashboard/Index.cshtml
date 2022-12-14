@@ -131,8 +131,6 @@
     </div>
     <div class="row">
         <div class="col-lg-6">
-        </div>
-        <div class="col-lg-6">
             @foreach (var item in Model.YearlyUserData)
             {
                 <div class="row pl">
@@ -145,6 +143,8 @@
                     @Html.DisplayFor(modelItem => item.YearlyExpense)
                     Total:
                     @ViewBag.YearlyTotal
+                    Current balance should be:
+                    @ViewBag.CurrentBalance
                 </div>
             }
         </div>

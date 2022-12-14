@@ -45,5 +45,7 @@ namespace MoneyTracker.Data
 
         public DbSet<YearlyUserData> YearlyUserData { get; set; }
 
+        public DbSet<MoneyTracker.Models.Balance> Balance { get; set; }
+
     }
 }
